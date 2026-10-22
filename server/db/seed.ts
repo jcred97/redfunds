@@ -3,12 +3,16 @@ dotenv.config();
 
 import { PrismaClient } from "../../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { assertDevelopmentDatabaseResetAllowed } from "./seed-guard";
+
+// Refuse before constructing a client or executing any database operation.
+assertDevelopmentDatabaseResetAllowed(process.env);
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Resetting development database and creating demo data...");
 
   // Clean existing data and reset auto-increment sequences
   await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Expense", "Category", "Spending" RESTART IDENTITY CASCADE`);
@@ -47,39 +51,39 @@ async function main() {
   // Create expenses for JC Personal - Food
   await prisma.expense.createMany({
     data: [
-      { title: "Jollibee", amount: 250, date: new Date("2026-04-01"), categoryId: food.id, transactionType: "CASH" },
-      { title: "McDonald's", amount: 180, date: new Date("2026-04-02"), categoryId: food.id, transactionType: "DEBIT_CARD", bank: "BDO" },
-      { title: "Shakeys", amount: 450, date: new Date("2026-04-03"), categoryId: food.id, transactionType: "CREDIT_CARD", bank: "BPI" },
-      { title: "Mang Inasal", amount: 150, date: new Date("2026-04-04"), categoryId: food.id, transactionType: "CASH" },
-      { title: "Grab Food", amount: 320, date: new Date("2026-04-05"), categoryId: food.id, transactionType: "DEBIT_CARD", bank: "BDO" },
+      { title: "Jollibee", amountCentavos: 25000, date: new Date("2026-04-01"), categoryId: food.id, transactionType: "CASH" },
+      { title: "McDonald's", amountCentavos: 18000, date: new Date("2026-04-02"), categoryId: food.id, transactionType: "DEBIT_CARD", bank: "BDO" },
+      { title: "Shakeys", amountCentavos: 45000, date: new Date("2026-04-03"), categoryId: food.id, transactionType: "CREDIT_CARD", bank: "BPI" },
+      { title: "Mang Inasal", amountCentavos: 15000, date: new Date("2026-04-04"), categoryId: food.id, transactionType: "CASH" },
+      { title: "Grab Food", amountCentavos: 32000, date: new Date("2026-04-05"), categoryId: food.id, transactionType: "DEBIT_CARD", bank: "BDO" },
     ],
   });
 
   // Create expenses for JC Personal - Transport
   await prisma.expense.createMany({
     data: [
-      { title: "Grab", amount: 150, date: new Date("2026-04-01"), categoryId: transport.id, transactionType: "DEBIT_CARD", bank: "BDO" },
-      { title: "Gas", amount: 1200, date: new Date("2026-04-02"), categoryId: transport.id, transactionType: "DEBIT_CARD", bank: "BDO" },
-      { title: "Toll Fee", amount: 120, date: new Date("2026-04-03"), categoryId: transport.id, transactionType: "CASH" },
+      { title: "Grab", amountCentavos: 15000, date: new Date("2026-04-01"), categoryId: transport.id, transactionType: "DEBIT_CARD", bank: "BDO" },
+      { title: "Gas", amountCentavos: 120000, date: new Date("2026-04-02"), categoryId: transport.id, transactionType: "DEBIT_CARD", bank: "BDO" },
+      { title: "Toll Fee", amountCentavos: 12000, date: new Date("2026-04-03"), categoryId: transport.id, transactionType: "CASH" },
     ],
   });
 
   // Create expenses for JC Personal - Bills
   await prisma.expense.createMany({
     data: [
-      { title: "Meralco", amount: 3200, date: new Date("2026-04-01"), categoryId: bills.id, transactionType: "BANK_PAYMENT", bank: "BDO" },
-      { title: "Globe Postpaid", amount: 999, date: new Date("2026-04-01"), categoryId: bills.id, transactionType: "BANK_PAYMENT", bank: "BDO" },
-      { title: "PLDT Fibr", amount: 1299, date: new Date("2026-04-01"), categoryId: bills.id, transactionType: "BANK_PAYMENT", bank: "BPI" },
+      { title: "Meralco", amountCentavos: 320000, date: new Date("2026-04-01"), categoryId: bills.id, transactionType: "BANK_PAYMENT", bank: "BDO" },
+      { title: "Globe Postpaid", amountCentavos: 99900, date: new Date("2026-04-01"), categoryId: bills.id, transactionType: "BANK_PAYMENT", bank: "BDO" },
+      { title: "PLDT Fibr", amountCentavos: 129900, date: new Date("2026-04-01"), categoryId: bills.id, transactionType: "BANK_PAYMENT", bank: "BPI" },
     ],
   });
 
   // Create expenses for Red Family
   await prisma.expense.createMany({
     data: [
-      { title: "SM Supermarket", amount: 4500, date: new Date("2026-04-01"), categoryId: groceries.id, transactionType: "DEBIT_CARD", bank: "BDO" },
-      { title: "Puregold", amount: 2300, date: new Date("2026-04-05"), categoryId: groceries.id, transactionType: "CASH" },
-      { title: "Water Bill", amount: 450, date: new Date("2026-04-01"), categoryId: utilities.id, transactionType: "BANK_TRANSFER", bank: "BPI" },
-      { title: "Meralco", amount: 5800, date: new Date("2026-04-01"), categoryId: utilities.id, transactionType: "BANK_PAYMENT", bank: "BDO" },
+      { title: "SM Supermarket", amountCentavos: 450000, date: new Date("2026-04-01"), categoryId: groceries.id, transactionType: "DEBIT_CARD", bank: "BDO" },
+      { title: "Puregold", amountCentavos: 230000, date: new Date("2026-04-05"), categoryId: groceries.id, transactionType: "CASH" },
+      { title: "Water Bill", amountCentavos: 45000, date: new Date("2026-04-01"), categoryId: utilities.id, transactionType: "BANK_TRANSFER", bank: "BPI" },
+      { title: "Meralco", amountCentavos: 580000, date: new Date("2026-04-01"), categoryId: utilities.id, transactionType: "BANK_PAYMENT", bank: "BDO" },
     ],
   });
 
@@ -89,7 +93,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error(e);
-    process.exit(1);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

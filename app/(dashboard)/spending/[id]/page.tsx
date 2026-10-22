@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
 import { getSpendingById, getExpensesBySpendingId, } from "@/app/(dashboard)/spending/_lib/spending.queries";
 
 export default async function SpendingPage({ params, }: { params: Promise<{ id: string }>; }) {
@@ -18,7 +19,7 @@ export default async function SpendingPage({ params, }: { params: Promise<{ id: 
     );
   }
 
-  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalCentavos = sumCentavos(expenses.map((expense) => expense.amountCentavos));
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -48,7 +49,7 @@ export default async function SpendingPage({ params, }: { params: Promise<{ id: 
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Total Spent</p>
             <p className="text-2xl font-bold text-white">
-              ₱{totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+              {formatPesoAmount(totalCentavos)}
             </p>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
@@ -115,7 +116,7 @@ export default async function SpendingPage({ params, }: { params: Promise<{ id: 
                       {expense.bank ?? "—"}
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-red-400 text-right">
-                      ₱{expense.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                      {formatPesoAmount(expense.amountCentavos)}
                     </td>
                   </tr>
                 ))}

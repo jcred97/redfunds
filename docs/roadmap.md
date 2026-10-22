@@ -8,8 +8,8 @@ The owner can record an expense on a phone, correct mistakes, review monthly spe
 
 ### 1. Make real data dependable
 
-- [ ] Replace `Expense.amount Float` with exact money storage, choosing integer centavos or a fixed-precision decimal. Define parsing, rounding, migration, and display behavior together; preserve any existing records deliberately.
-- [ ] Guard destructive seeding so it cannot accidentally erase the database used for real expenses.
+- [x] Implement integer-centavo storage, exact parsing/formatting/totals, and a transactional migration with conversion and rollback tests. Apply the migration together with the matching application release; the shared database rollout is a separate deployment step.
+- [x] Guard destructive seeding: require explicit development mode and a reset opt-in; refuse Vercel production before database access. Only target disposable development databases.
 - [ ] Define whether an expense date is a calendar date or an instant. Use an explicit `Asia/Manila` policy for defaults, display, and month boundaries.
 - [ ] Decide and document spending/category deletion behavior when child records exist; the current foreign keys restrict deletion.
 

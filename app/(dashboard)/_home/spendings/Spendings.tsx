@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
 import { getSpendings } from "@/app/(dashboard)/spending/_lib/spending.queries";
 import NewSpendingButton from "./_components/NewSpendingButton";
 
@@ -39,10 +40,10 @@ export default async function Spendings() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {spendings.map((spending) => {
-              const totalAmount = spending.categories.reduce(
-                (sum, cat) =>
-                  sum + cat.expenses.reduce((s, e) => s + e.amount, 0),
-                0
+              const totalCentavos = sumCentavos(
+                spending.categories.flatMap((category) =>
+                  category.expenses.map((expense) => expense.amountCentavos)
+                )
               );
               const totalExpenses = spending.categories.reduce(
                 (sum, cat) => sum + cat._count.expenses,
@@ -62,11 +63,7 @@ export default async function Spendings() {
                     </div>
 
                     <p className="text-3xl font-bold text-white mb-4 tracking-tight">
-                      ₱
-                      {totalAmount.toLocaleString("en-PH", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {formatPesoAmount(totalCentavos)}
                     </p>
 
                     <div className="flex gap-3 text-sm text-gray-400">

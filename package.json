@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "npx tsx server/db/seed.ts"
+    "seed": "npx tsx server/db/seed.ts",
+    "test": "node --import tsx --test app/lib/money.test.ts server/db/seed-guard.test.ts server/db/money-migration.test.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.6.0",
@@ -20,6 +21,7 @@
     "tsx": "^4.21.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.4.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

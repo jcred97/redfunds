@@ -24,7 +24,7 @@ Implemented source includes:
 - Server-side queries and actions using Prisma and PostgreSQL.
 - Philippine peso display formatting.
 
-The app is an early prototype. Expense creation is not wired to the New Expense button, the categories page is a placeholder, and authentication, recurring entries, and offline synchronization are not implemented. Money currently uses floating-point storage; replacing it is an early roadmap task.
+The app is an early prototype. Expense creation is not wired to the New Expense button, the categories page is a placeholder, and authentication, recurring entries, and offline synchronization are not implemented. Expense amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
 
 ## Local development
 
@@ -40,7 +40,9 @@ Use a development PostgreSQL database and keep connection credentials out of Git
 
 Check the target database before applying migrations. For existing databases, inspect migration history and back up data first; the committed spending migration adds a required category relationship without a backfill.
 
-**Do not run `npm run seed` against valuable data.** The current script unconditionally truncates Expense, Category, and Spending, then inserts demonstration records. Seeding is not required for normal startup.
+**Only seed a disposable development database.** The script replaces every Expense, Category, and Spending with demonstration records. It refuses execution unless both `NODE_ENV=development` and `REDFUNDS_ALLOW_DATABASE_RESET=true` are explicitly set, and always refuses a Vercel production environment. The guard runs before constructing a database client. Seeding is not required for startup, and these flags do not verify which database the URL targets. Do not save the reset opt-in in `.env`.
+
+To intentionally replace demo data, first point `DATABASE_URL` at a disposable development database, apply migrations, then set those two environment variables for that invocation of `npm run seed` only. Remove the opt-in afterward. Never use this to repair a database connection.
 
 Available scripts:
 
@@ -50,9 +52,18 @@ Available scripts:
 | `npm run lint` | Run ESLint |
 | `npm run build` | Generate Prisma client and build Next.js |
 | `npm start` | Serve an existing production build |
-| `npm run seed` | Destructively replace database contents with demonstration data |
+| `npm run seed` | Guarded development reset; refuses by default |
+| `npm test` | Money, seed-guard, and isolated PostgreSQL migration checks; no live database required |
 
-No automated test script is configured yet. Documentation of a command does not mean it has been verified in the current environment.
+### Exact money and migration
+
+`Expense.amountCentavos` is a positive PostgreSQL integer. For example, PHP 150.75 is stored as `15075`. A single expense may be at most PHP 21,474,836.47. `app/lib/money.ts` parses decimal strings without floating-point arithmetic, formats peso values, and sums integer centavos with overflow checks. Totals can exceed the single-expense limit while remaining safe JavaScript integers.
+
+New input must be positive, with at most two decimal places; extra decimal places, signs, scientific notation, currency symbols, and grouping commas are rejected rather than silently rounded. Leading/trailing whitespace and leading zeros are accepted. The parser is ready for the future expense form; expense creation is still not implemented.
+
+For existing databases, `20261022130000_exact_money_centavos` converts legacy float pesos through PostgreSQL `numeric` and rounds once to the nearest centavo (half-centavo ties round up). Invalid/nonfinite amounts, nonpositive values, values rounding to zero, and amounts exceeding the integer limit stop the transaction without dropping the original column. Record IDs, relationships, and dates are unchanged. A database constraint rejects nonpositive centavos.
+
+Back up the database before applying the migration and reconcile expense counts and per-record converted amounts afterward. **Coordinate this migration with the new application release:** it replaces `amount` with `amountCentavos`, so the older deployed application is not compatible with the new schema. Pause traffic during the release, apply committed migrations with `npx prisma migrate deploy`, generate the client, and deploy the matching code. Do not apply this migration independently to a database still serving the older Vercel release. The isolated tests exercise conversion, transaction rollback, and constraints without using `.env` or connecting to Supabase.
 
 ### Database connection troubleshooting
 
@@ -72,6 +83,7 @@ The homepage currently queries the database during production prerendering, so t
 | `app/(dashboard)/spending/[id]/` | Spending detail/history route |
 | `app/(dashboard)/categories/` | Categories route placeholder |
 | `app/lib/prisma.ts` | Shared runtime database client |
+| `app/lib/money.ts` | Exact centavo parsing, formatting, and totals |
 | `server/db/schema.prisma` | Data model |
 | `server/db/migrations/` | Database migration history |
 | `server/db/seed.ts` | Destructive demonstration-data seed |

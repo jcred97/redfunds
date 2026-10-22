@@ -6,7 +6,7 @@ export async function getSpendings() {
       _count: { select: { categories: true } },
       categories: {
         include: {
-          expenses: { select: { amount: true } },
+          expenses: { select: { amountCentavos: true } },
           _count: { select: { expenses: true } },
         },
       },
