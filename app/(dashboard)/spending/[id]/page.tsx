@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getSpendingById, getExpensesBySpendingId, } from "@/server/queries/spending.queries";
+import { getSpendingById, getExpensesBySpendingId, } from "@/app/(dashboard)/spending/_lib/spending.queries";
 
 export default async function SpendingPage({ params, }: { params: Promise<{ id: string }>; }) {
   const { id: rawId } = await params;

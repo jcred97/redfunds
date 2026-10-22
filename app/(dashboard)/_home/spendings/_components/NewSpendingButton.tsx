@@ -1,19 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState, useActionState } from "react";
-import { createSpending } from "@/server/mutations/spending.mutations";
+import {
+  createSpending,
+  type ActionState,
+} from "@/app/(dashboard)/spending/_lib/spending.mutations";
 
 export default function NewSpendingButton() {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [state, action, pending] = useActionState(createSpending, null);
-
-  // Close modal on success
-  useEffect(() => {
-    if (state && "success" in state) {
-      setOpen(false);
-    }
-  }, [state]);
+  const [state, action, pending] = useActionState(
+    async (previousState: ActionState, formData: FormData) => {
+      const result = await createSpending(previousState, formData);
+      if (result && "success" in result) {
+        setOpen(false);
+      }
+      return result;
+    },
+    null
+  );
 
   // Focus input when modal opens
   useEffect(() => {

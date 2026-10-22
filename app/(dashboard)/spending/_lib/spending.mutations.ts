@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/server/db/prisma";
+import { prisma } from "@/app/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export type ActionState = { error: string } | { success: true } | null;

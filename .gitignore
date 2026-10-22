@@ -43,7 +43,5 @@ next-env.d.ts
 # prisma generated client
 /generated
 
-# AI
-CLAUDE.md
+# local agent instructions
 AGENTS.md
-.claude

@@ -1,4 +1,4 @@
-import { prisma } from "@/server/db/prisma";
+import { prisma } from "@/app/lib/prisma";
 
 export async function getSpendings() {
   return prisma.spending.findMany({
