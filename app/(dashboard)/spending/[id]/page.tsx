@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
-import { getSpendingById, getExpensesBySpendingId, } from "@/app/(dashboard)/spending/_lib/spending.queries";
+import { getExpenseGroupById, getExpensesByExpenseGroupId, } from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
 
-export default async function SpendingPage({ params, }: { params: Promise<{ id: string }>; }) {
+export default async function ExpenseGroupPage({ params, }: { params: Promise<{ id: string }>; }) {
   const { id: rawId } = await params;
   const id = Number(rawId);
 
-  const [spending, expenses] = await Promise.all([
-    getSpendingById(id),
-    getExpensesBySpendingId(id),
+  const [expenseGroup, expenses] = await Promise.all([
+    getExpenseGroupById(id),
+    getExpensesByExpenseGroupId(id),
   ]);
 
-  if (!spending) {
+  if (!expenseGroup) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-        <p className="text-gray-400">Spending not found.</p>
+        <p className="text-gray-400">Expense group not found.</p>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export default async function SpendingPage({ params, }: { params: Promise<{ id: 
               ← Back
             </Link>
             <span className="text-gray-700">|</span>
-            <h1 className="text-xl font-bold">{spending.name}</h1>
+            <h1 className="text-xl font-bold">{expenseGroup.name}</h1>
           </div>
           <button className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
             + New Expense
@@ -59,7 +59,7 @@ export default async function SpendingPage({ params, }: { params: Promise<{ id: 
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Categories</p>
             <p className="text-2xl font-bold text-white">
-              {spending.categories.length}
+              {expenseGroup.categories.length}
             </p>
           </div>
         </div>
@@ -83,7 +83,7 @@ export default async function SpendingPage({ params, }: { params: Promise<{ id: 
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Date</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Title</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Category</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Type</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Payment Method</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Bank</th>
                   <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Amount</th>
                 </tr>
@@ -108,12 +108,12 @@ export default async function SpendingPage({ params, }: { params: Promise<{ id: 
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-400">
-                      {expense.transactionType
-                        ? expense.transactionType.replace(/_/g, " ")
+                      {expense.paymentMethod
+                        ? expense.paymentMethod.replace(/_/g, " ")
                         : "—"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-400">
-                      {expense.bank ?? "—"}
+                      {expense.bankAssignment?.bank.name ?? expense.legacyBankName ?? "—"}
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-red-400 text-right">
                       {formatPesoAmount(expense.amountCentavos)}

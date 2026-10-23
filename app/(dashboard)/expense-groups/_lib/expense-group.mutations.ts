@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 export type ActionState = { error: string } | { success: true } | null;
 
-export async function createSpending(
+export async function createExpenseGroup(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
@@ -13,7 +13,7 @@ export async function createSpending(
 
   if (!name?.trim()) return { error: "Name is required" };
 
-  await prisma.spending.create({
+  await prisma.expenseGroup.create({
     data: { name: name.trim() },
   });
 
@@ -21,7 +21,7 @@ export async function createSpending(
   return { success: true };
 }
 
-export async function deleteSpending(id: number) {
-  await prisma.spending.delete({ where: { id } });
+export async function deleteExpenseGroup(id: number) {
+  await prisma.expenseGroup.delete({ where: { id } });
   revalidatePath("/");
 }

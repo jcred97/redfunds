@@ -2,16 +2,16 @@
 
 import { useEffect, useRef, useState, useActionState } from "react";
 import {
-  createSpending,
+  createExpenseGroup,
   type ActionState,
-} from "@/app/(dashboard)/spending/_lib/spending.mutations";
+} from "@/app/(dashboard)/expense-groups/_lib/expense-group.mutations";
 
-export default function NewSpendingButton() {
+export default function NewExpenseGroupButton() {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [state, action, pending] = useActionState(
     async (previousState: ActionState, formData: FormData) => {
-      const result = await createSpending(previousState, formData);
+      const result = await createExpenseGroup(previousState, formData);
       if (result && "success" in result) {
         setOpen(false);
       }
@@ -41,10 +41,10 @@ export default function NewSpendingButton() {
         >
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 w-full max-w-md mx-4">
             <h2 className="text-lg font-semibold text-white mb-1">
-              New Spending
+              New Expense Group
             </h2>
             <p className="text-sm text-gray-400 mb-5">
-              A spending is a workspace for your categories and expenses.
+              An expense group is a workspace for your categories and expenses.
             </p>
 
             <form action={action}>

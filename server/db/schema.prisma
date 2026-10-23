@@ -12,43 +12,103 @@ datasource db {
   provider = "postgresql"
 }
 
-enum TransactionType {
+enum PaymentMethod {
   DEBIT_CARD
   CREDIT_CARD
   BANK_TRANSFER
   BANK_PAYMENT
   CASH
+
+  @@map("TransactionType")
 }
 
-model Spending {
-  id         Int        @id @default(autoincrement())
-  name       String
-  categories Category[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+model ExpenseGroup {
+  id              Int              @id @default(autoincrement())
+  name            String
+  categories      Category[]
+  budgets         Budget[]
+  bankAssignments BankAssignment[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("Spending")
 }
 
 model Category {
-  id         Int       @id @default(autoincrement())
-  name       String
-  icon       String?
-  color      String?
-  spendingId Int
-  spending   Spending  @relation(fields: [spendingId], references: [id])
-  expenses   Expense[]
-  createdAt  DateTime  @default(now())
+  id             Int          @id @default(autoincrement())
+  name           String
+  icon           String?
+  color          String?
+  expenseGroupId Int          @map("spendingId")
+  expenseGroup   ExpenseGroup @relation(fields: [expenseGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "Category_spendingId_fkey")
+  expenses       Expense[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([id, expenseGroupId], map: "Category_id_spendingId_key")
 }
 
 model Expense {
-  id              Int              @id @default(autoincrement())
-  title           String
-  amountCentavos  Int
-  date            DateTime
-  notes           String?
-  bank            String?
-  transactionType TransactionType?
-  categoryId      Int
-  category        Category         @relation(fields: [categoryId], references: [id])
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id               Int             @id @default(autoincrement())
+  title            String
+  amountCentavos   Int
+  date             DateTime
+  notes            String?
+  legacyBankName   String?         @map("bank")
+  bankAssignmentId Int?
+  expenseGroupId   Int
+  paymentMethod    PaymentMethod?  @map("transactionType")
+  categoryId       Int
+  category         Category        @relation(fields: [categoryId, expenseGroupId], references: [id, expenseGroupId], onDelete: Restrict, onUpdate: Cascade)
+  bankAssignment   BankAssignment? @relation(fields: [bankAssignmentId, expenseGroupId], references: [id, expenseGroupId], onDelete: Restrict, onUpdate: Cascade)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([expenseGroupId, date])
+  @@index([categoryId, expenseGroupId])
+  @@index([bankAssignmentId, expenseGroupId])
+}
+
+// Monthly targets for now, matching the Salesforce application.
+model Budget {
+  id             Int          @id @default(autoincrement())
+  expenseGroupId Int
+  expenseGroup   ExpenseGroup @relation(fields: [expenseGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  budgetMonth    DateTime     @db.Date
+  amountCentavos Int
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([expenseGroupId, budgetMonth])
+}
+
+model Bank {
+  id          Int              @id @default(autoincrement())
+  name        String
+  key         String           @unique
+  active      Boolean          @default(true)
+  assignments BankAssignment[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model BankAssignment {
+  id                    Int          @id @default(autoincrement())
+  expenseGroupId        Int
+  expenseGroup          ExpenseGroup @relation(fields: [expenseGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  bankId                Int
+  bank                  Bank         @relation(fields: [bankId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  active                Boolean      @default(true)
+  supportedDebitCard    Boolean      @default(true)
+  supportedCreditCard   Boolean      @default(true)
+  supportedBankTransfer Boolean      @default(true)
+  supportedBankPayment  Boolean      @default(true)
+  expenses              Expense[]
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@unique([expenseGroupId, bankId])
+  @@unique([id, expenseGroupId])
+  @@index([bankId])
+  @@map("ExpenseGroupBank")
 }

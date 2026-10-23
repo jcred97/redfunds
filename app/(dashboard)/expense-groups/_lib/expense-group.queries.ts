@@ -1,7 +1,7 @@
 import { prisma } from "@/app/lib/prisma";
 
-export async function getSpendings() {
-  return prisma.spending.findMany({
+export async function getExpenseGroups() {
+  return prisma.expenseGroup.findMany({
     include: {
       _count: { select: { categories: true } },
       categories: {
@@ -15,8 +15,8 @@ export async function getSpendings() {
   });
 }
 
-export async function getSpendingById(id: number) {
-  return prisma.spending.findUnique({
+export async function getExpenseGroupById(id: number) {
+  return prisma.expenseGroup.findUnique({
     where: { id },
     include: {
       categories: {
@@ -29,13 +29,14 @@ export async function getSpendingById(id: number) {
   });
 }
 
-export async function getExpensesBySpendingId(id: number) {
+export async function getExpensesByExpenseGroupId(id: number) {
   return prisma.expense.findMany({
     where: {
-      category: { spendingId: id },
+      category: { expenseGroupId: id },
     },
     include: {
       category: { select: { name: true, color: true, icon: true } },
+      bankAssignment: { include: { bank: { select: { name: true } } } },
     },
     orderBy: { date: "desc" },
   });

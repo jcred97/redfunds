@@ -2,22 +2,26 @@
 
 Planning baseline: October 22, 2026. All unchecked items below are planned work, not implemented capabilities.
 
-## Next milestone: single-user daily expense tracking
+## Next milestone: private-account daily expense tracking
 
-The owner can record an expense on a phone, correct mistakes, review monthly spending, and recover saved history. Retain the current Next.js, Prisma, and PostgreSQL foundation.
+Each signed-in user can record an expense on a phone, correct mistakes, review monthly spending, and recover saved history. Retain the current Next.js, Prisma, and PostgreSQL foundation.
 
 ### 1. Make real data dependable
+
+- [x] Adapt the core ExpenseGroup, Category, Expense, Budget, Bank, and BankAssignment schema while preserving legacy records. Use PaymentMethod and legacyBankName in application code with mappings to existing database identifiers. See [data model](data-model.md). Budget/bank management screens remain planned; exchange rates are deferred.
 
 - [x] Implement integer-centavo storage, exact parsing/formatting/totals, and a transactional migration with conversion and rollback tests. Apply the migration together with the matching application release; the shared database rollout is a separate deployment step.
 - [x] Guard destructive seeding: require explicit development mode and a reset opt-in; refuse Vercel production before database access. Only target disposable development databases.
 - [ ] Define whether an expense date is a calendar date or an instant. Use an explicit `Asia/Manila` policy for defaults, display, and month boundaries.
-- [ ] Decide and document spending/category deletion behavior when child records exist; the current foreign keys restrict deletion.
+- [x] Retain restricted deletion for expense groups/categories with child records and banks/assignments referenced by history. Document and test these rules in the core model.
 
 ### 2. Complete the core workflow
 
-- [ ] Implement category creation, editing, and deliberate deletion/archive behavior within a Spending.
+- [ ] Implement Better Auth email/password accounts, sessions, and expense-group ownership; verify every read and mutation isolates users before enabling public registration. Supabase remains only the database host; Google sign-in can follow later.
+
+- [ ] Implement category creation, editing, and deliberate deletion/archive behavior within a Expense Group.
 - [ ] Wire New Expense to a working form; add expense creation, editing, and deletion.
-- [ ] Validate title, amount, date, and category on the server. Ensure a submitted category belongs to the intended Spending.
+- [ ] Validate title, amount, date, and category on the server. Ensure a submitted category belongs to the intended Expense Group.
 - [ ] Provide pending, success, and error feedback; preserve entered values after failed saves.
 
 ### 3. Make daily phone use comfortable
@@ -36,9 +40,9 @@ The owner can record an expense on a phone, correct mistakes, review monthly spe
 ### Acceptance criteria
 
 - At representative 360-430px phone widths, the entry flow and history are usable without horizontal page scrolling; the software keyboard does not hide essential controls.
-- Create a Spending and Category, add an Expense, edit it, and delete it. Confirm changes survive refresh and summaries remain correct.
+- Create a Expense Group and Category, add an Expense, edit it, and delete it. Confirm changes survive refresh and summaries remain correct.
 - Exact-money checks include PHP 0.10 + PHP 0.20 = PHP 0.30, plus a month-boundary date check under the chosen Manila date policy.
-- Invalid amounts/dates and a category from another Spending are rejected by the server; a failed save retains input and supports a safe retry.
+- Invalid amounts/dates and a category from another Expense Group are rejected by the server; a failed save retains input and supports a safe retry.
 - Month/category filters agree with saved records and displayed totals.
 - Exported history reconciles with source records, and a backup can be restored successfully.
 - Run lint/build and meaningful automated checks for money handling, validation, and data access as those behaviors are implemented. Exercise the complete workflow on the owner's actual phone.
