@@ -50,9 +50,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
+  /* Keep opacity fades while disabling resizing and positional movement. */
+  ::view-transition-group(*) {
     animation: none !important;
   }
 }
