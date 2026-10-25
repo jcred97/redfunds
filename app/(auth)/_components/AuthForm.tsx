@@ -77,14 +77,14 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     "mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 disabled:opacity-60";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-950 px-6 py-12 text-white">
-      <ViewTransition
-        key={mode}
-        name="auth-card"
-        share="auth-card-fade"
-        enter="auth-card-fade"
-        default="none"
-      >
+    <ViewTransition
+      key={mode}
+      name="auth-page"
+      share="auth-page-fade"
+      enter="auth-page-fade"
+      default="none"
+    >
+      <main className="flex min-h-screen items-center justify-center bg-gray-950 px-6 py-12 text-white">
         <section
           className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-6 sm:p-8"
           aria-labelledby="auth-title"
@@ -211,7 +211,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             </Link>
           </p>
         </section>
-      </ViewTransition>
-    </main>
+      </main>
+    </ViewTransition>
   );
 }
