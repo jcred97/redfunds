@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assertDevelopmentDatabaseResetAllowed } from "./seed-guard";
+import { assertDevelopmentDatabaseResetAllowed } from "../../server/db/seed-guard";
 
 test("refuses a reset by default", () => {
   assert.throws(() => assertDevelopmentDatabaseResetAllowed({}), /reset refused/);

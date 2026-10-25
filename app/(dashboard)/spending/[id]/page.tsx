@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
-import { getExpenseGroupById, getExpensesByExpenseGroupId, } from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
+import {
+  getExpenseGroupById,
+  getExpensesByExpenseGroupId,
+} from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
 
-export default async function ExpenseGroupPage({ params, }: { params: Promise<{ id: string }>; }) {
+export default async function ExpenseGroupPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id: rawId } = await params;
   const id = Number(rawId);
 
@@ -12,14 +20,12 @@ export default async function ExpenseGroupPage({ params, }: { params: Promise<{ 
   ]);
 
   if (!expenseGroup) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-        <p className="text-gray-400">Expense group not found.</p>
-      </div>
-    );
+    notFound();
   }
 
-  const totalCentavos = sumCentavos(expenses.map((expense) => expense.amountCentavos));
+  const totalCentavos = sumCentavos(
+    expenses.map((expense) => expense.amountCentavos)
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -80,17 +86,32 @@ export default async function ExpenseGroupPage({ params, }: { params: Promise<{ 
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-800">
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Date</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Title</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Category</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Payment Method</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Bank</th>
-                  <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">Amount</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                    Date
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                    Title
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                    Category
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                    Payment Method
+                  </th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                    Bank
+                  </th>
+                  <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                    Amount
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
                 {expenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-gray-800/50 transition-colors">
+                  <tr
+                    key={expense.id}
+                    className="hover:bg-gray-800/50 transition-colors"
+                  >
                     <td className="px-6 py-4 text-sm text-gray-400">
                       {new Date(expense.date).toLocaleDateString("en-PH", {
                         month: "short",
@@ -103,8 +124,12 @@ export default async function ExpenseGroupPage({ params, }: { params: Promise<{ 
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span className="flex items-center gap-1.5">
-                        {expense.category.icon && <span>{expense.category.icon}</span>}
-                        <span className="text-gray-300">{expense.category.name}</span>
+                        {expense.category.icon && (
+                          <span>{expense.category.icon}</span>
+                        )}
+                        <span className="text-gray-300">
+                          {expense.category.name}
+                        </span>
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-400">
@@ -113,7 +138,9 @@ export default async function ExpenseGroupPage({ params, }: { params: Promise<{ 
                         : "—"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-400">
-                      {expense.bankAssignment?.bank.name ?? expense.legacyBankName ?? "—"}
+                      {expense.bankAssignment?.bank.name ??
+                        expense.legacyBankName ??
+                        "—"}
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-red-400 text-right">
                       {formatPesoAmount(expense.amountCentavos)}
