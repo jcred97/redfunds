@@ -57,7 +57,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             ? "Too many attempts. Please wait a moment and try again."
             : signingUp
               ? "We could not create your account. Check your details, or sign in if you already have an account."
-              : "We could not sign you in. Check your email and password."
+              : "Unable to sign in. Check your email and password. If you have not registered yet, create an account first."
         );
 
         return;
@@ -87,13 +87,13 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         </p>
 
         <h1 id="auth-title" className="text-2xl font-semibold">
-          {signingUp ? "Create your account" : "Welcome back"}
+          {signingUp ? "Create your account" : "Sign in to RedFunds"}
         </h1>
 
         <p className="mt-2 text-sm text-gray-400">
           {signingUp
             ? "Keep your expense groups and spending in one private place."
-            : "Sign in to view your expense groups."}
+            : "Use the email and password you registered with."}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5" aria-busy={pending}>
@@ -195,7 +195,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          {signingUp ? "Already have an account? " : "New to RedFunds? "}
+          {signingUp ? "Already have an account? " : "Don't have an account? "}
           <Link
             href={signingUp ? "/sign-in" : "/sign-up"}
             className="font-medium text-red-400 underline-offset-4 hover:underline"
