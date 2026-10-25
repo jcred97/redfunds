@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ViewTransition } from "react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,13 +18,20 @@ export const metadata: Metadata = {
   description: "Track your expenses",
 };
 
-export default function RootLayout({ children, } : Readonly<{ children: React.ReactNode; }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body 
-        className="min-h-full flex flex-col"
-      >
-        {children}
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">
+        <ViewTransition>
+          <div className="flex flex-1 flex-col">{children}</div>
+        </ViewTransition>
       </body>
     </html>
   );
