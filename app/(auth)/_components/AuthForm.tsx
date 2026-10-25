@@ -2,20 +2,29 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, ViewTransition, type FormEvent } from "react";
+import {
+  useRef,
+  useState,
+  useTransition,
+  ViewTransition,
+  type FormEvent,
+} from "react";
 import { authClient } from "@/app/lib/auth-client";
+import LoadingSpinner from "@/app/components/LoadingSpinner/LoadingSpinner";
 
 export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
   const submitting = useRef(false);
-  const [pending, setPending] = useState(false);
+  const [authPending, setAuthPending] = useState(false);
+  const [redirecting, startNavigation] = useTransition();
   const [error, setError] = useState("");
   const signingUp = mode === "sign-up";
+  const pending = authPending || redirecting;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submitting.current) return;
+    if (submitting.current || pending) return;
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
@@ -35,7 +44,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     }
 
     submitting.current = true;
-    setPending(true);
+    setAuthPending(true);
 
     try {
       const result = signingUp
@@ -63,18 +72,31 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         return;
       }
 
-      router.replace("/");
-      router.refresh();
+      // Track navigation separately so loading continues after the auth response.
+      startNavigation(() => {
+        router.replace("/");
+        router.refresh();
+      });
     } catch {
       setError("Unable to connect. Please try again.");
     } finally {
       submitting.current = false;
-      setPending(false);
+      setAuthPending(false);
     }
   }
 
   const inputClass =
     "mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 disabled:opacity-60";
+
+  const buttonLabel = redirecting
+    ? "Opening your expense groups..."
+    : pending
+      ? signingUp
+        ? "Creating account..."
+        : "Signing in..."
+      : signingUp
+        ? "Create account"
+        : "Sign in";
 
   return (
     <ViewTransition
@@ -189,23 +211,35 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded-lg bg-red-500 px-4 py-3 font-medium text-white transition-colors hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-3 font-medium text-white transition-colors hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 disabled:cursor-wait disabled:opacity-60"
             >
-              {pending
-                ? signingUp
-                  ? "Creating account..."
-                  : "Signing in..."
-                : signingUp
-                  ? "Create account"
-                  : "Sign in"}
+              {pending && <LoadingSpinner />}
+              {buttonLabel}
             </button>
+
+            {pending && (
+              <p role="status" className="text-center text-sm text-gray-300">
+                {redirecting
+                  ? signingUp
+                    ? "Account created. Opening your expense groups..."
+                    : "Signed in successfully. Opening your expense groups..."
+                  : signingUp
+                    ? "Please wait while we create your account."
+                    : "Please wait while we sign you in."}
+              </p>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-400">
             {signingUp ? "Already have an account? " : "Don't have an account? "}
             <Link
               href={signingUp ? "/sign-in" : "/sign-up"}
-              className="font-medium text-red-400 underline-offset-4 hover:underline"
+              aria-disabled={pending}
+              tabIndex={pending ? -1 : undefined}
+              onClick={(event) => {
+                if (pending) event.preventDefault();
+              }}
+              className="font-medium text-red-400 underline-offset-4 hover:underline aria-disabled:pointer-events-none aria-disabled:opacity-50"
             >
               {signingUp ? "Sign in" : "Create an account"}
             </Link>
