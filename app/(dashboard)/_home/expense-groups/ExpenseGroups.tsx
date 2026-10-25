@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
 import { getExpenseGroups } from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
 import NewExpenseGroupButton from "./_components/NewExpenseGroupButton";
+import SignOutButton from "@/app/components/SignOutButton/SignOutButton";
 
 export default async function ExpenseGroups() {
   const expenseGroups = await getExpenseGroups();
@@ -14,7 +15,10 @@ export default async function ExpenseGroups() {
           <h1 className="text-xl font-bold tracking-tight">
             Red<span className="text-red-500">Funds</span>
           </h1>
-          <NewExpenseGroupButton />
+          <div className="flex items-center gap-3">
+            <NewExpenseGroupButton />
+            <SignOutButton />
+          </div>
         </div>
       </header>
 

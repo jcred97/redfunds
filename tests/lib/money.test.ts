@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatPesoAmount, MAX_AMOUNT_CENTAVOS, parsePesoAmount, sumCentavos } from "./money";
+import { formatPesoAmount, MAX_AMOUNT_CENTAVOS, parsePesoAmount, sumCentavos } from "../../app/lib/money";
 
 test("peso inputs become exact centavos and totals", () => {
   assert.equal(parsePesoAmount("150.75"), 15075);

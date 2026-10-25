@@ -8,26 +8,30 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "npx tsx server/db/seed.ts",
-    "test": "node --import tsx --test app/lib/money.test.ts server/db/seed-guard.test.ts server/db/money-migration.test.ts server/db/core-model-migration.test.ts"
+    "test": "node --import tsx --test tests/lib/money.test.ts tests/db/seed-guard.test.ts tests/db/money-migration.test.ts tests/db/core-model-migration.test.ts tests/lib/auth.test.ts tests/expense-groups/expense-group.access.test.ts tests/db/auth-migration.test.ts"
   },
   "dependencies": {
+    "@better-auth/prisma-adapter": "1.7.12",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
+    "better-auth": "1.7.12",
     "dotenv": "^17.4.1",
-    "next": "16.2.2",
+    "next": "16.4.3",
     "prisma": "^7.6.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "0.0.1",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.4.1",
+    "@electric-sql/pglite-socket": "0.1.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.2",
+    "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

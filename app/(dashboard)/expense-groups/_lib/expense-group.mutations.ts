@@ -1,7 +1,11 @@
 "use server";
 
 import { prisma } from "@/app/lib/prisma";
+import { requireUserId } from "@/app/lib/session";
 import { revalidatePath } from "next/cache";
+import { createExpenseGroupAccess } from "./expense-group.access";
+
+const access = createExpenseGroupAccess(prisma, requireUserId);
 
 export type ActionState = { error: string } | { success: true } | null;
 
@@ -9,19 +13,23 @@ export async function createExpenseGroup(
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const name = formData.get("name") as string;
+  try {
+    await access.create(formData.get("name"));
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { error: error.message };
+    }
 
-  if (!name?.trim()) return { error: "Name is required" };
-
-  await prisma.expenseGroup.create({
-    data: { name: name.trim() },
-  });
+    throw error;
+  }
 
   revalidatePath("/");
+
   return { success: true };
 }
 
 export async function deleteExpenseGroup(id: number) {
-  await prisma.expenseGroup.delete({ where: { id } });
+  await access.delete(id);
+
   revalidatePath("/");
 }

@@ -17,7 +17,9 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 
 ### 2. Complete the core workflow
 
-- [ ] Implement Better Auth email/password accounts, sessions, and expense-group ownership; verify every read and mutation isolates users before enabling public registration. Supabase remains only the database host; Google sign-in can follow later.
+- [x] Implement Better Auth email/password accounts, sessions, and expense-group ownership in source, including sign-up/sign-in/sign-out, anonymous-access protection, and per-user queries/actions. Supabase remains only the database host.
+- [ ] Apply the auth migration and deploy the matching release; configure production secret/origin, verify database-role/RLS configuration, and check user isolation against the release. Preserved legacy groups remain unclaimed and hidden.
+- [ ] Configure email delivery, email verification, and password recovery. Google sign-in remains deferred.
 
 - [ ] Implement category creation, editing, and deliberate deletion/archive behavior within a Expense Group.
 - [ ] Wire New Expense to a working form; add expense creation, editing, and deletion.
@@ -35,7 +37,8 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 ### 4. Verify recovery and private access
 
 - [ ] Provide a usable export and document a backup/restore procedure; verify a restore into a separate development database.
-- [ ] Before deployment outside a trusted local environment, add authentication or an effective access gate covering reads and mutations. A single intended user does not make anonymous internet access appropriate.
+- [x] Add authentication and ownership checks covering implemented reads and mutations in source.
+- [ ] Activate those protections through a coordinated migration/deployment and verify signed-out, cross-user, and session-revocation behavior in the deployed environment.
 
 ### Acceptance criteria
 
@@ -58,7 +61,7 @@ After the daily workflow is useful:
 ## Before a multi-user product launch
 
 - Revisit the RedFunds name, domains, and trademark searches. The provisional naming decision is not clearance.
-- Add user ownership and, if shared finances are in scope, explicit workspace membership and roles. Enforce authorization in every relevant query and mutation, with isolation tests.
+- Maintain user-ownership checks and isolation tests as new reads and mutations are added. If shared finances enter scope, introduce explicit workspace membership and roles.
 - Review backup operations, migration safety, monitoring, abuse controls, and export/account-deletion behavior.
 - Add billing, external integrations, and larger background-job infrastructure only when required by the product scope.
 
