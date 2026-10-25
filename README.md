@@ -1,13 +1,13 @@
 # RedFunds
 
-RedFunds is a budgeting and expense-management web app designed for daily use on a phone, with desktop access for reviewing expenses. Email/password accounts and private expense-group ownership are implemented locally using Better Auth. The authentication migration and matching production deployment are still pending.
+RedFunds is a budgeting and expense-management web app designed for daily use on a phone, with desktop access for reviewing expenses. Email/password accounts and private expense-group ownership run through Better Auth. The authentication migration and matching Vercel production release were completed on October 25, 2026.
 
 ## Current direction
 
 Decisions recorded on October 22, 2026:
 
 - **Working name: RedFunds.** Red is the founder's surname. Keep the current name while building and using the app; revisit branding before a public product launch or a significant domain purchase. Domain ownership and trademark clearance have not been established.
-- **Private accounts for everyone.** Build sign-up/sign-in and enforce per-user expense-group ownership before opening registration. Better Auth will run inside the TypeScript application; Supabase is used only as the PostgreSQL host. Google sign-in can be added later.
+- **Private accounts for everyone.** Email/password sign-up/sign-in and per-user expense-group ownership are deployed. Better Auth runs inside the TypeScript application; Supabase is used only as the PostgreSQL host. Google sign-in can be added later.
 - **Keep the existing stack:** Next.js App Router, React, TypeScript, Tailwind CSS, Prisma, and PostgreSQL. No backend replacement or native mobile rewrite is planned for the initial milestone.
 - **Web first, designed for phones.** Complete the connected expense workflow before adding PWA installation or offline synchronization.
 - Keep branding separate from business rules and database identifiers when adding features, so a future rename remains manageable.
@@ -78,11 +78,17 @@ Migration `20261024100000_user_auth_ownership` adds Better Auth tables, database
 
 Authentication throttling uses database storage across server instances and trusts `x-real-ip`, which Vercel supplies. If hosting behind another proxy, configure it to overwrite this header with the real client IP; do not accept client-controlled forwarding headers. When no trusted client IP is available (as observed locally), authentication requests share one fallback bucket per endpoint. Local browser tests can therefore throttle one another; Vercel supplies the trusted header in production.
 
-**Not yet applied to the shared database or deployed:** coordinate this auth migration with the matching application release. Before release:
+The production rollout completed on October 25, 2026 through [PR #1](https://github.com/jcred97/redfunds/pull/1), merged as `39be226038cb867de9a98fbfb357e013eace4236`. Vercel reported the matching production deployment as ready. Production authentication variables were configured, a backup was restored and verified in an isolated database, and migration `20261024100000_user_auth_ownership` was applied successfully. All 25 original business rows were preserved; the five legacy expense groups remain unclaimed and hidden.
+
+Production HTTP checks verified sign-up/sign-in for two independent accounts, anonymous redirects, private home lists, access to each account's own group, rejection of cross-user group IDs, hidden legacy records, hostile-origin rejection, and sign-out/session revocation. Temporary test accounts and groups were removed after verification.
+
+The production domain is public and protected by application sign-in. Vercel Standard Protection restricts generated deployment URLs, including older releases without ownership checks; all six older ready deployments were verified behind the Vercel login gate. Keep those older deployment URLs protected while they retain database access.
+
+For future installations or releases that change authentication storage, coordinate the migration with the matching application version:
 
 1. Back up existing rows and inspect migration status and any RLS policies. Verify the runtime role owns the protected tables or has `BYPASSRLS`.
 2. Set `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in the intended Vercel environment. Production uses `https://redfunds.vercel.app`; Preview needs its own explicit origin/settings. Changing environment variables requires a new deployment.
-3. Restrict traffic during the transition: the old release has no ownership filters and must not serve the newly private database.
+3. Restrict traffic during transitions where an older release lacks the required access controls or schema support; it must not serve newly private records.
 4. Apply committed migrations with `npx prisma migrate deploy`, generate the client, and deploy the matching code. This release is not activated by merely pushing the schema file.
 5. Verify anonymous redirects, two independent users, rejected cross-user IDs, sign-out/revocation, and preserved unclaimed legacy records. Any later assignment of legacy groups must target a specifically verified account ID, never the first account to sign up.
 

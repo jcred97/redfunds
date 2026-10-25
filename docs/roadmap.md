@@ -2,6 +2,8 @@
 
 Planning baseline: October 22, 2026. All unchecked items below are planned work, not implemented capabilities.
 
+Release update: October 25, 2026. [PR #1](https://github.com/jcred97/redfunds/pull/1) merged as `39be226038cb867de9a98fbfb357e013eace4236`; the authentication migration was applied and the matching Vercel production deployment reached ready status. A backup restore was verified, all 25 original business rows were preserved, and the five legacy expense groups remain unclaimed.
+
 ## Next milestone: private-account daily expense tracking
 
 Each signed-in user can record an expense on a phone, correct mistakes, review monthly spending, and recover saved history. Retain the current Next.js, Prisma, and PostgreSQL foundation.
@@ -18,7 +20,7 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 ### 2. Complete the core workflow
 
 - [x] Implement Better Auth email/password accounts, sessions, and expense-group ownership in source, including sign-up/sign-in/sign-out, anonymous-access protection, and per-user queries/actions. Supabase remains only the database host.
-- [ ] Apply the auth migration and deploy the matching release; configure production secret/origin, verify database-role/RLS configuration, and check user isolation against the release. Preserved legacy groups remain unclaimed and hidden.
+- [x] Apply the auth migration and deploy the matching release; configure production secret/origin, verify database-role/RLS configuration, and check user isolation against the release. Completed October 25, 2026; preserved legacy groups remain unclaimed and hidden.
 - [ ] Configure email delivery, email verification, and password recovery. Google sign-in remains deferred.
 
 - [ ] Implement category creation, editing, and deliberate deletion/archive behavior within a Expense Group.
@@ -36,9 +38,9 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 
 ### 4. Verify recovery and private access
 
-- [ ] Provide a usable export and document a backup/restore procedure; verify a restore into a separate development database.
+- [ ] Provide a usable export and document an ongoing backup/restore procedure. The October 25 authentication release included a verified isolated backup restore; user export and the ongoing recovery workflow remain planned.
 - [x] Add authentication and ownership checks covering implemented reads and mutations in source.
-- [ ] Activate those protections through a coordinated migration/deployment and verify signed-out, cross-user, and session-revocation behavior in the deployed environment.
+- [x] Activate those protections through a coordinated migration/deployment and verify signed-out, cross-user, and session-revocation behavior in the deployed environment. Production HTTP checks passed on October 25, 2026; temporary test accounts and groups were removed.
 
 ### Acceptance criteria
 

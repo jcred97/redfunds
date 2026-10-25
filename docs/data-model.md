@@ -1,6 +1,6 @@
 # Core data model
 
-The core business model follows the Salesforce Budget & Expense Manager's Expense Group, Category, Expense, Budget, Bank, and Expense Group Bank concepts. Salesforce metadata and sharing rules are not copied into PostgreSQL. Better Auth email/password accounts and private per-user ownership are now implemented in source. Their migration and production release are pending; Supabase remains only the PostgreSQL host.
+The core business model follows the Salesforce Budget & Expense Manager's Expense Group, Category, Expense, Budget, Bank, and Expense Group Bank concepts. Salesforce metadata and sharing rules are not copied into PostgreSQL. Better Auth email/password accounts and private per-user ownership were deployed with their migration on October 25, 2026; Supabase remains only the PostgreSQL host.
 
 ```text
 User
@@ -63,4 +63,6 @@ Migration `20261024100000_user_auth_ownership` adds nullable `Spending.userId` a
 
 RLS is enabled on business and authentication tables without adding Data API policies. The migration refuses preexisting policies on these tables, requiring explicit audited resolution before retrying. With no policies, this denies the Supabase `anon`/`authenticated` API roles. Prisma runs through a trusted server role that must own the tables or hold `BYPASSRLS`; it does not propagate Better Auth sessions as Supabase identities. Application-level ownership filters provide user isolation for that trusted role.
 
-The auth migration has been prepared and tested locally; applying it to the shared database and deploying the matching release are separate pending steps. Back up data, coordinate traffic during release, configure production auth secrets/origin, and verify preserved legacy groups remain inaccessible. See README for rollout instructions.
+Migration `20261024100000_user_auth_ownership` was applied to the shared database on October 25, 2026 after an isolated backup restore was verified. All 25 original business rows remained unchanged apart from the new nullable ownership field; the five legacy groups retain null owners. RLS is enabled on all 11 business/authentication tables with no Data API policies. [PR #1](https://github.com/jcred97/redfunds/pull/1) merged as `39be226038cb867de9a98fbfb357e013eace4236`, and the matching Vercel production deployment reached ready status. Production HTTP checks confirmed private access for two independent users, rejected cross-user group IDs, hidden legacy records, and revoked sessions after sign-out. Temporary verification records were removed.
+
+Future schema releases still require backups, coordinated traffic, and verification against the matching application version. Email verification, password recovery, and Google sign-in remain deferred. See README for rollout instructions.
