@@ -18,6 +18,37 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+::view-transition-group(auth-card) {
+  animation-duration: 300ms;
+  animation-timing-function: ease;
+}
+
+::view-transition-old(.auth-card-fade) {
+  animation: auth-card-fade-out 150ms ease-out both;
+}
+
+::view-transition-new(.auth-card-fade) {
+  animation: auth-card-fade-in 240ms ease-out 60ms both;
+}
+
+@keyframes auth-card-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes auth-card-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
   ::view-transition-old(*),
