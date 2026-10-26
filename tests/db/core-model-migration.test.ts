@@ -56,11 +56,14 @@ test("core migration preserves legacy records and physical names without guessin
     assert.deepEqual((await db.query(`SELECT * FROM "Spending" ORDER BY id`)).rows, beforeGroups.rows);
     assert.deepEqual((await db.query(`SELECT * FROM "Category" ORDER BY id`)).rows, beforeCategories.rows);
     const afterExpenses = await db.query<Record<string, unknown>>(`SELECT * FROM "Expense" ORDER BY id`);
-    assert.deepEqual(afterExpenses.rows.map(({ expenseGroupId, bankAssignmentId, ...oldFields }) => {
-      assert.equal(bankAssignmentId, null);
-      assert.equal(expenseGroupId, oldFields.categoryId === 11 ? 7 : 8);
-      return oldFields;
-    }), beforeExpenses.rows);
+    const preservedExpenseFields = afterExpenses.rows.map(
+      ({ expenseGroupId, bankAssignmentId, ...oldFields }) => {
+        assert.equal(bankAssignmentId, null);
+        assert.equal(expenseGroupId, oldFields.categoryId === 11 ? 7 : 8);
+        return oldFields;
+      },
+    );
+    assert.deepEqual(preservedExpenseFields, beforeExpenses.rows);
     for (const table of ["Bank", "ExpenseGroupBank", "Budget"]) {
       assert.deepEqual((await db.query(`SELECT * FROM "${table}"`)).rows, []);
     }

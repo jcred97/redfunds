@@ -50,7 +50,7 @@ export default async function ExpenseGroups() {
                 )
               );
               const totalExpenses = expenseGroup.categories.reduce(
-                (sum, cat) => sum + cat._count.expenses,
+                (expenseCount, category) => expenseCount + category._count.expenses,
                 0
               );
 

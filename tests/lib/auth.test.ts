@@ -99,38 +99,42 @@ test("Better Auth handles credentials, revocable sessions, origin checks, and sh
     });
 
     await t.test("weak passwords, duplicate signup, wrong passwords, and hostile origins fail", async () => {
-      assert.equal(
-        (await auth.handler(request("sign-up/email", {
+      const weakPasswordResponse = await auth.handler(
+        request("sign-up/email", {
           email: "weak@example.test",
           password: "short",
           name: "Weak",
-        }))).status,
-        400,
+        }),
       );
-      assert.ok(
-        (await auth.handler(request("sign-up/email", {
+      assert.equal(weakPasswordResponse.status, 400);
+
+      const duplicateSignupResponse = await auth.handler(
+        request("sign-up/email", {
           email,
           password,
           name: "Duplicate",
-        }))).status >= 400,
+        }),
       );
-      assert.equal(
-        (await auth.handler(request("sign-in/email", {
+      assert.ok(duplicateSignupResponse.status >= 400);
+
+      const wrongPasswordResponse = await auth.handler(
+        request("sign-in/email", {
           email,
           password: "Definitely wrong 42!",
-        }))).status,
-        401,
+        }),
       );
-      assert.equal(
-        (await auth.handler(request(
+      assert.equal(wrongPasswordResponse.status, 401);
+
+      const hostileOriginResponse = await auth.handler(
+        request(
           "sign-in/email",
           { email, password },
           "",
           "192.0.2.20",
           "https://attacker.example",
-        ))).status,
-        403,
+        ),
       );
+      assert.equal(hostileOriginResponse.status, 403);
       assert.equal(await client.user.count(), 1);
     });
 

@@ -22,7 +22,9 @@ export default function NewExpenseGroupButton() {
 
   // Focus input when modal opens
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (open) {
+      inputRef.current?.focus();
+    }
   }, [open]);
 
   return (
@@ -37,7 +39,11 @@ export default function NewExpenseGroupButton() {
       {open && (
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-          onClick={(e) => e.target === e.currentTarget && setOpen(false)}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setOpen(false);
+            }
+          }}
         >
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 w-full max-w-md mx-4">
             <h2 className="text-lg font-semibold text-white mb-1">

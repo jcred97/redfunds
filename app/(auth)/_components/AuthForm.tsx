@@ -24,7 +24,9 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submitting.current || pending) return;
+    if (submitting.current || pending) {
+      return;
+    }
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
@@ -47,27 +49,35 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     setAuthPending(true);
 
     try {
-      const result = signingUp
-        ? await authClient.signUp.email({
-            name,
-            email,
-            password,
-            callbackURL: "/",
-          })
-        : await authClient.signIn.email({
-            email,
-            password,
-            callbackURL: "/",
-          });
+      let result;
+
+      if (signingUp) {
+        result = await authClient.signUp.email({
+          name,
+          email,
+          password,
+          callbackURL: "/",
+        });
+      } else {
+        result = await authClient.signIn.email({
+          email,
+          password,
+          callbackURL: "/",
+        });
+      }
 
       if (result.error) {
-        setError(
-          result.error.status === 429
-            ? "Too many attempts. Please wait a moment and try again."
-            : signingUp
-              ? "We could not create your account. Check your details, or sign in if you already have an account."
-              : "Unable to sign in. Check your email and password. If you have not registered yet, create an account first."
-        );
+        if (result.error.status === 429) {
+          setError("Too many attempts. Please wait a moment and try again.");
+        } else if (signingUp) {
+          setError(
+            "We could not create your account. Check your details, or sign in if you already have an account."
+          );
+        } else {
+          setError(
+            "Unable to sign in. Check your email and password. If you have not registered yet, create an account first."
+          );
+        }
 
         return;
       }
@@ -88,11 +98,15 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const inputClass =
     "mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 disabled:opacity-60";
 
-  const loadingMessage = redirecting
-    ? "Opening your expense groups..."
-    : signingUp
-      ? "Creating your account..."
-      : "Signing in...";
+  let loadingMessage: string;
+
+  if (redirecting) {
+    loadingMessage = "Opening your expense groups...";
+  } else if (signingUp) {
+    loadingMessage = "Creating your account...";
+  } else {
+    loadingMessage = "Signing in...";
+  }
 
   return (
     <ViewTransition
