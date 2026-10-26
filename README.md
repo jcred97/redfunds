@@ -25,6 +25,8 @@ Implemented source includes:
 - Database-backed authentication rate limiting and private ownership of new expense groups.
 - Philippine peso display formatting.
 
+Sessions last seven days and can renew after one day. Server-rendered pages only validate the session; browser requests renew both the database expiry and the HTTP-only cookie together. A shared browser component checks the session on mount, when the window regains focus or reconnects, and every five minutes while a session exists. Expired or revoked sessions cannot be renewed.
+
 The app is an early prototype. Expense creation is not wired to the New Expense button, the categories page is a placeholder, and email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
 
 ## Local development

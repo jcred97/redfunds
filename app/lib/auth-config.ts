@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { nextCookies } from "better-auth/next-js";
 import type { PrismaClient } from "@/generated/prisma/client";
 
 export function createAuth(
@@ -69,5 +70,6 @@ export function createAuth(
         ipAddressHeaders: ["x-real-ip"],
       },
     },
+    plugins: [nextCookies()],
   });
 }

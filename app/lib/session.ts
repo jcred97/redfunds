@@ -9,6 +9,8 @@ import { auth } from "./auth";
 export const getCurrentUser = cache(async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
+    // Server rendering cannot send renewed cookies; the browser handles renewal.
+    query: { disableRefresh: true },
   });
 
   return session?.user ?? null;
