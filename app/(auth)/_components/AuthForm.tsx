@@ -10,7 +10,7 @@ import {
   type FormEvent,
 } from "react";
 import { authClient } from "@/app/lib/auth-client";
-import LoadingSpinner from "@/app/components/LoadingSpinner/LoadingSpinner";
+import LoadingScreen from "@/app/components/LoadingScreen/LoadingScreen";
 
 export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
@@ -88,15 +88,11 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const inputClass =
     "mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 disabled:opacity-60";
 
-  const buttonLabel = redirecting
+  const loadingMessage = redirecting
     ? "Opening your expense groups..."
-    : pending
-      ? signingUp
-        ? "Creating account..."
-        : "Signing in..."
-      : signingUp
-        ? "Create account"
-        : "Sign in";
+    : signingUp
+      ? "Creating your account..."
+      : "Signing in...";
 
   return (
     <ViewTransition
@@ -108,6 +104,8 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     >
       <main className="flex min-h-screen items-center justify-center bg-gray-950 px-6 py-12 text-white">
         <section
+          inert={pending}
+          aria-hidden={pending}
           className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-6 sm:p-8"
           aria-labelledby="auth-title"
         >
@@ -213,21 +211,8 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
               disabled={pending}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-3 font-medium text-white transition-colors hover:bg-red-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 disabled:cursor-wait disabled:opacity-60"
             >
-              {pending && <LoadingSpinner />}
-              {buttonLabel}
+              {signingUp ? "Create account" : "Sign in"}
             </button>
-
-            {pending && (
-              <p role="status" className="text-center text-sm text-gray-300">
-                {redirecting
-                  ? signingUp
-                    ? "Account created. Opening your expense groups..."
-                    : "Signed in successfully. Opening your expense groups..."
-                  : signingUp
-                    ? "Please wait while we create your account."
-                    : "Please wait while we sign you in."}
-              </p>
-            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-400">
@@ -245,6 +230,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             </Link>
           </p>
         </section>
+        {pending && <LoadingScreen message={loadingMessage} />}
       </main>
     </ViewTransition>
   );

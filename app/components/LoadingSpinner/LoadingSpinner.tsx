@@ -2,7 +2,7 @@ export default function LoadingSpinner() {
   return (
     <svg
       aria-hidden="true"
-      className="h-5 w-5 shrink-0 animate-spin motion-reduce:animate-none"
+      className="h-5 w-5 shrink-0 animate-spin"
       viewBox="0 0 24 24"
       fill="none"
     >
