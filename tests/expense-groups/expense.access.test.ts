@@ -9,7 +9,7 @@ import { PrismaClient } from "../../generated/prisma/client";
 import { createExpenseAccess } from "../../app/(dashboard)/expense-groups/_lib/expense.access";
 import { sumCentavos } from "../../app/lib/money";
 
-test("expense creation validates money, dates, category membership, and current ownership", async (t) => {
+test("expense writes validate money, dates, category membership, and current ownership", async (t) => {
   // Temporary PostgreSQL fixtures only. Never reads DATABASE_URL or live data.
   const db = await PGlite.create();
   const server = new PGLiteSocketServer({ db, host: "127.0.0.1", port: 0 });
@@ -220,6 +220,216 @@ test("expense creation validates money, dates, category membership, and current 
       );
       const bobExpense = await access.create(bobGroup.id, bobCategory.id, validInput);
       assert.equal(bobExpense.expenseGroupId, bobGroup.id);
+    });
+
+    await t.test("editing checks the original expense and its replacement category without losing history", async (editing) => {
+      const replacementCategory = await client.category.create({
+        data: { name: "Transport", expenseGroupId: aliceGroup.id },
+      });
+      const bank = await client.bank.create({
+        data: { name: "BPI", key: "bpi" },
+      });
+      const bankAssignment = await client.bankAssignment.create({
+        data: { bankId: bank.id, expenseGroupId: aliceGroup.id },
+      });
+      const original = await client.expense.create({
+        data: {
+          title: "Original title",
+          amountCentavos: 15075,
+          date: new Date("2026-10-27T00:00:00.000Z"),
+          expenseGroupId: aliceGroup.id,
+          categoryId: aliceCategory.id,
+          notes: "Keep this historical note",
+          paymentMethod: "DEBIT_CARD",
+          legacyBankName: "Historical bank text",
+          bankAssignmentId: bankAssignment.id,
+        },
+      });
+      const otherExpenses = [];
+
+      for (const [groupId, categoryId] of [
+        [aliceOtherGroup.id, aliceOtherCategory.id],
+        [bobGroup.id, bobCategory.id],
+        [unclaimedGroup.id, unclaimedCategory.id],
+      ]) {
+        otherExpenses.push(
+          await client.expense.create({
+            data: {
+              title: "Other expense",
+              amountCentavos: 100,
+              date: new Date("2026-10-27T00:00:00.000Z"),
+              expenseGroupId: groupId,
+              categoryId,
+            },
+          }),
+        );
+      }
+
+      const [aliceOtherExpense, bobExpense, unclaimedExpense] = otherExpenses;
+      const notFound = /^TypeError: Expense or category not found in this expense group$/;
+      const readAllExpenses = () => client.expense.findMany({ orderBy: { id: "asc" } });
+
+      await editing.test("owners can correct editable fields while preserving optional data and identity", async () => {
+        const beforeCount = await client.expense.count();
+        const changed = await alice.update(
+          aliceGroup.id,
+          original.id,
+          replacementCategory.id,
+          { title: "  Corrected title  ", amount: "0.30", date: "2024-02-29" },
+        );
+
+        assert.equal(changed.id, original.id);
+        assert.equal(changed.title, "Corrected title");
+        assert.equal(changed.amountCentavos, 30);
+        assert.equal(changed.date.toISOString(), "2024-02-29T00:00:00.000Z");
+        assert.equal(changed.categoryId, replacementCategory.id);
+        assert.equal(changed.expenseGroupId, original.expenseGroupId);
+        assert.equal(changed.notes, original.notes);
+        assert.equal(changed.paymentMethod, original.paymentMethod);
+        assert.equal(changed.legacyBankName, original.legacyBankName);
+        assert.equal(changed.bankAssignmentId, original.bankAssignmentId);
+        assert.deepEqual(changed.createdAt, original.createdAt);
+        assert.ok(changed.updatedAt.getTime() >= original.updatedAt.getTime());
+        assert.equal(await client.expense.count(), beforeCount);
+      });
+
+      await editing.test("foreign, unclaimed, missing, and wrong-group expenses cannot be edited or moved", async () => {
+        const before = await readAllExpenses();
+
+        for (const [groupId, expenseId, categoryId] of [
+          [bobGroup.id, bobExpense.id, bobCategory.id],
+          [unclaimedGroup.id, unclaimedExpense.id, unclaimedCategory.id],
+          [aliceGroup.id, bobExpense.id, aliceCategory.id],
+          [aliceGroup.id, unclaimedExpense.id, aliceCategory.id],
+          [aliceGroup.id, aliceOtherExpense.id, aliceCategory.id],
+          [aliceOtherGroup.id, original.id, aliceOtherCategory.id],
+          [aliceGroup.id, 2_147_483_647, aliceCategory.id],
+          [2_147_483_647, original.id, aliceCategory.id],
+        ]) {
+          await assert.rejects(
+            alice.update(groupId, expenseId, categoryId, validInput),
+            notFound,
+          );
+        }
+        await assert.rejects(
+          bob.update(aliceGroup.id, original.id, aliceCategory.id, validInput),
+          notFound,
+        );
+
+        assert.deepEqual(await readAllExpenses(), before);
+      });
+
+      await editing.test("a rejected replacement category rolls back every proposed field change", async () => {
+        const before = await readAllExpenses();
+
+        for (const categoryId of [
+          aliceOtherCategory.id,
+          bobCategory.id,
+          unclaimedCategory.id,
+          2_147_483_647,
+        ]) {
+          await assert.rejects(
+            alice.update(aliceGroup.id, original.id, categoryId, validInput),
+            notFound,
+          );
+        }
+
+        assert.deepEqual(await readAllExpenses(), before);
+      });
+
+      await editing.test("anonymous edits still authenticate before validating submitted fields", async () => {
+        const before = await readAllExpenses();
+        await assert.rejects(
+          anonymous.update(aliceGroup.id, original.id, aliceCategory.id, validInput),
+          /^Error: Sign in required$/,
+        );
+        await assert.rejects(
+          anonymous.update(NaN, 2_147_483_648, -1, {
+            title: null,
+            amount: null,
+            date: null,
+          }),
+          /^Error: Sign in required$/,
+        );
+        assert.deepEqual(await readAllExpenses(), before);
+      });
+
+      await editing.test("invalid edits leave the entire saved record unchanged", async () => {
+        const before = await readAllExpenses();
+
+        for (const title of [null, "", "  ", "x".repeat(101)]) {
+          await assert.rejects(
+            alice.update(aliceGroup.id, original.id, aliceCategory.id, {
+              ...validInput,
+              title,
+            }),
+            TypeError,
+          );
+        }
+        for (const amount of [null, "0", "-1", "1.001", "1e3", "21474836.48"]) {
+          await assert.rejects(
+            alice.update(aliceGroup.id, original.id, aliceCategory.id, {
+              ...validInput,
+              amount,
+            }),
+            TypeError,
+          );
+        }
+        for (const date of [null, "2026-02-29", "2026-04-31", "2026-1-1"]) {
+          await assert.rejects(
+            alice.update(aliceGroup.id, original.id, aliceCategory.id, {
+              ...validInput,
+              date,
+            }),
+            TypeError,
+          );
+        }
+        for (const id of [
+          0,
+          -1,
+          1.5,
+          NaN,
+          Infinity,
+          2_147_483_648,
+          Number.MAX_SAFE_INTEGER,
+        ]) {
+          await assert.rejects(
+            alice.update(id, original.id, aliceCategory.id, validInput),
+            notFound,
+          );
+          await assert.rejects(
+            alice.update(aliceGroup.id, id, aliceCategory.id, validInput),
+            notFound,
+          );
+          await assert.rejects(
+            alice.update(aliceGroup.id, original.id, id, validInput),
+            notFound,
+          );
+        }
+
+        assert.deepEqual(await readAllExpenses(), before);
+      });
+
+      await editing.test("each edit resolves its current owner rather than retaining an earlier session", async () => {
+        let currentUser = "alice";
+        const access = createExpenseAccess(client, async () => currentUser);
+        await access.update(aliceGroup.id, original.id, aliceCategory.id, validInput);
+
+        currentUser = "bob";
+        const before = await readAllExpenses();
+        await assert.rejects(
+          access.update(aliceGroup.id, original.id, aliceCategory.id, validInput),
+          notFound,
+        );
+        assert.deepEqual(await readAllExpenses(), before);
+        const changed = await access.update(
+          bobGroup.id,
+          bobExpense.id,
+          bobCategory.id,
+          validInput,
+        );
+        assert.equal(changed.id, bobExpense.id);
+      });
     });
   } finally {
     await prisma?.$disconnect();

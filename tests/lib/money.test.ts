@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatPesoAmount, MAX_AMOUNT_CENTAVOS, parsePesoAmount, sumCentavos } from "../../app/lib/money";
+import { formatPesoAmount, formatPesoInput, MAX_AMOUNT_CENTAVOS, parsePesoAmount, sumCentavos } from "../../app/lib/money";
 
 test("peso inputs become exact centavos and totals", () => {
   assert.equal(parsePesoAmount("150.75"), 15075);
@@ -18,6 +18,17 @@ test("single expense limits preserve every centavo", () => {
   for (const value of ["0", "0.00", "000.0"]) {
     assert.throws(() => parsePesoAmount(value), /greater than zero/);
   }
+});
+
+test("editable peso values round-trip exactly without grouping or currency symbols", () => {
+  for (const centavos of [1, 30, 15075, MAX_AMOUNT_CENTAVOS]) {
+    assert.equal(parsePesoAmount(formatPesoInput(centavos)), centavos);
+  }
+
+  assert.equal(formatPesoInput(1), "0.01");
+  assert.equal(formatPesoInput(15075), "150.75");
+  assert.equal(formatPesoInput(MAX_AMOUNT_CENTAVOS), "21474836.47");
+  assert.throws(() => formatPesoInput(-1), /nonnegative safe integer/);
 });
 
 test("reject ambiguous or invalid input instead of rounding", () => {

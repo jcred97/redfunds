@@ -30,6 +30,16 @@ function assertCentavos(value: number): void {
   }
 }
 
+/** Format saved centavos for an editable peso field, without grouping or symbols. */
+export function formatPesoInput(amountCentavos: number): string {
+  assertCentavos(amountCentavos);
+  const value = BigInt(amountCentavos);
+  const pesos = value / BigInt(100);
+  const fraction = (value % BigInt(100)).toString().padStart(2, "0");
+
+  return `${pesos}.${fraction}`;
+}
+
 /** Format integer centavos exactly, including totals above a single amount's limit. */
 export function formatPesoAmount(amountCentavos: number): string {
   assertCentavos(amountCentavos);

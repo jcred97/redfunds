@@ -26,14 +26,15 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [x] Implement owner-only category creation and category lists within an Expense Group, with server validation and accessible pending/error feedback.
 - [ ] Implement category editing and deliberate deletion/archive behavior within an Expense Group.
 - [x] Wire New Expense to a working owner-only creation form.
-- [ ] Add expense editing and deletion.
+- [x] Add owner-only expense editing with the same validation and draft protection as creation.
+- [ ] Add expense deletion with confirmation.
 - [x] Validate title, amount, date, and category on the server. Ensure a submitted category belongs to the intended Expense Group and its signed-in owner.
 - [x] Provide pending, success, and error feedback for creation; preserve entered values after failed saves.
 
 ### 3. Make daily phone use comfortable
 
 - [ ] Prioritize amount entry, category selection, and a sensible date default.
-- [ ] Replace the cramped detail-page summary and table with responsive layouts, including a compact expense list on narrow screens.
+- [x] Provide responsive summaries and a compact expense list with Edit actions on narrow screens; retain a table on desktop.
 - [ ] Support long names, empty states, keyboard use, and accessible dialogs and labels.
 - [ ] Add month/category filters and summaries that update after changes.
 - [ ] Calculate totals in the database and paginate history rather than loading every expense to calculate a summary. Add indexes based on actual filters and access patterns.

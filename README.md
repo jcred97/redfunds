@@ -22,14 +22,16 @@ Implemented source includes:
 
 - Expense-group creation, home cards, and detail/history pages. Existing `/spending/[id]` URLs remain valid.
 - Owner-only category creation and category lists inside each expense group, using the shared accessible name-entry dialog.
-- Owner-only expense entry with a title, peso amount, calendar date, and a category from the current group. Saved history and totals refresh after creation.
+- Owner-only expense entry and editing with a title, peso amount, calendar date, and a category from the current group. Saved history and totals refresh after changes. Phone screens use compact expense cards; desktop screens retain the table.
 - Email/password sign-up, sign-in, and sign-out through Better Auth, with authenticated server-side queries and actions using Prisma and PostgreSQL.
 - Database-backed authentication rate limiting and private ownership of new expense groups.
 - Philippine peso display formatting.
 
 Sessions last seven days and can renew after one day. Server-rendered pages only validate the session; browser requests renew both the database expiry and the HTTP-only cookie together. A shared browser component checks the session on mount, when the window regains focus or reconnects, and every five minutes while a session exists. Expired or revoked sessions cannot be renewed.
 
-The app is an early prototype. Expense/category editing and deletion, email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
+The app is an early prototype. Expense deletion, category editing/deletion, email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
+
+Full-screen loading feedback is reserved for sign-in, sign-up, and sign-out. Group navigation uses inline link feedback, and normal route loading uses a lightweight in-page message. Saves and edits keep their pending/error feedback inside the form dialog.
 
 New expense dates represent calendar days. The form defaults to today's date in `Asia/Manila`; selected days are stored at UTC midnight in the existing timestamp column and displayed using UTC so the day does not shift between browser time zones. Existing stored timestamps are not rewritten.
 

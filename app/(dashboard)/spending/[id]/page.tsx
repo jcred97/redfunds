@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
-import { formatExpenseDate } from "@/app/lib/expense-date";
+import ExpenseHistory from "./_components/ExpenseHistory";
 import NewCategoryButton from "./_components/NewCategoryButton";
 import NewExpenseButton from "./_components/NewExpenseButton";
 import {
@@ -123,70 +123,14 @@ export default async function ExpenseGroupPage({
             </p>
           </div>
         ) : (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
-                    Date
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
-                    Title
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
-                    Category
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
-                    Payment Method
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
-                    Bank
-                  </th>
-                  <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {expenses.map((expense) => (
-                  <tr
-                    key={expense.id}
-                    className="hover:bg-gray-800/50 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm text-gray-400">
-                      {formatExpenseDate(expense.date)}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-white">
-                      {expense.title}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="flex items-center gap-1.5">
-                        {expense.category.icon && (
-                          <span>{expense.category.icon}</span>
-                        )}
-                        <span className="text-gray-300">
-                          {expense.category.name}
-                        </span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-400">
-                      {expense.paymentMethod
-                        ? expense.paymentMethod.replace(/_/g, " ")
-                        : "—"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-400">
-                      {expense.bankAssignment?.bank.name ??
-                        expense.legacyBankName ??
-                        "—"}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-red-400 text-right">
-                      {formatPesoAmount(expense.amountCentavos)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ExpenseHistory
+            expenseGroupId={expenseGroup.id}
+            categories={expenseGroup.categories.map((category) => ({
+              id: category.id,
+              name: category.name,
+            }))}
+            expenses={expenses}
+          />
         )}
       </main>
     </div>

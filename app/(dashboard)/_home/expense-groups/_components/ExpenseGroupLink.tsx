@@ -1,10 +1,20 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTransition, type ReactNode } from "react";
-import LoadingScreen from "@/app/components/LoadingScreen/LoadingScreen";
-import { useExpenseGroupLoading } from "@/app/components/ExpenseGroupLoading/ExpenseGroupLoading";
+import Link, { useLinkStatus } from "next/link";
+import type { ReactNode } from "react";
+
+function NavigationStatus({ name }: { name: string }) {
+  const { pending } = useLinkStatus();
+
+  return (
+    <span
+      role="status"
+      className="pointer-events-none absolute bottom-1 left-6 right-6 h-4 truncate text-xs text-gray-400"
+    >
+      {pending && `Opening ${name}...`}
+    </span>
+  );
+}
 
 export default function ExpenseGroupLink({
   id,
@@ -15,30 +25,10 @@ export default function ExpenseGroupLink({
   name: string;
   children: ReactNode;
 }) {
-  const router = useRouter();
-  const { selectGroup } = useExpenseGroupLoading();
-  const [pending, startNavigation] = useTransition();
-  const href = `/spending/${id}`;
-
   return (
-    <>
-      <Link
-        href={href}
-        aria-disabled={pending}
-        onNavigate={(event) => {
-          event.preventDefault();
-
-          if (pending) {
-            return;
-          }
-
-          selectGroup({ id, name });
-          startNavigation(() => router.push(href));
-        }}
-      >
-        {children}
-      </Link>
-      {pending && <LoadingScreen message={`Loading ${name}...`} />}
-    </>
+    <Link href={`/spending/${id}`} className="relative block">
+      {children}
+      <NavigationStatus name={name} />
+    </Link>
   );
 }
