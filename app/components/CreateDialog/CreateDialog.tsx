@@ -118,7 +118,7 @@ export default function CreateDialog({
         aria-controls={dialogId}
         onClick={openDialog}
         disabled={disabled}
-        className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex cursor-pointer items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       >
         {triggerLabel}
       </button>
