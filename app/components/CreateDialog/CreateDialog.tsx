@@ -178,7 +178,7 @@ export default function CreateDialog({
             <button
               type="submit"
               disabled={pending}
-              className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="cursor-pointer px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:cursor-wait disabled:opacity-50"
             >
               {pending ? pendingLabel : submitLabel}
             </button>
