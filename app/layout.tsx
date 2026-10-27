@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ViewTransition } from "react";
 import SessionRefresh from "@/app/components/SessionRefresh/SessionRefresh";
+import { ExpenseGroupLoadingProvider } from "@/app/components/ExpenseGroupLoading/ExpenseGroupLoading";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +33,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <SessionRefresh />
         <ViewTransition>
-          <div className="flex flex-1 flex-col">{children}</div>
+          <div className="flex flex-1 flex-col">
+            <ExpenseGroupLoadingProvider>{children}</ExpenseGroupLoadingProvider>
+          </div>
         </ViewTransition>
       </body>
     </html>

@@ -53,7 +53,7 @@ The development seed still requires explicit opt-in. It resets all six core tabl
 
 ## Deferred
 
-Email verification/delivery, password recovery, Google sign-in, and administrative assignment of preserved groups are deferred. Daily, yearly, and custom budget periods, exchange rates and original-currency snapshots, recurring templates/jobs, and automation settings are deferred. The expense's existing date representation is unchanged; budget month DATE semantics do not settle the separate expense-date/Manila policy.
+Email verification/delivery, password recovery, Google sign-in, and administrative assignment of preserved groups are deferred. Daily, yearly, and custom budget periods, exchange rates and original-currency snapshots, recurring templates/jobs, and automation settings are deferred. Expense dates are calendar days: new entries default to today's `Asia/Manila` day, use UTC midnight in the existing timestamp column, and display the UTC calendar day. No existing timestamp values are rewritten. Budget months remain PostgreSQL DATE values.
 
 ## Authentication and ownership
 

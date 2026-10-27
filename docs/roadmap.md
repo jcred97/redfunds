@@ -14,7 +14,7 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 
 - [x] Implement integer-centavo storage, exact parsing/formatting/totals, and a transactional migration with conversion and rollback tests. Apply the migration together with the matching application release; the shared database rollout is a separate deployment step.
 - [x] Guard destructive seeding: require explicit development mode and a reset opt-in; refuse Vercel production before database access. Only target disposable development databases.
-- [ ] Define whether an expense date is a calendar date or an instant. Use an explicit `Asia/Manila` policy for defaults, display, and month boundaries.
+- [x] Define expense dates as calendar days: default to today in `Asia/Manila`, store the selected day at UTC midnight in the existing timestamp column, and display its UTC calendar day. Existing timestamps are preserved.
 - [x] Retain restricted deletion for expense groups/categories with child records and banks/assignments referenced by history. Document and test these rules in the core model.
 
 ### 2. Complete the core workflow
@@ -25,9 +25,10 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 
 - [x] Implement owner-only category creation and category lists within an Expense Group, with server validation and accessible pending/error feedback.
 - [ ] Implement category editing and deliberate deletion/archive behavior within an Expense Group.
-- [ ] Wire New Expense to a working form; add expense creation, editing, and deletion.
-- [ ] Validate title, amount, date, and category on the server. Ensure a submitted category belongs to the intended Expense Group.
-- [ ] Provide pending, success, and error feedback; preserve entered values after failed saves.
+- [x] Wire New Expense to a working owner-only creation form.
+- [ ] Add expense editing and deletion.
+- [x] Validate title, amount, date, and category on the server. Ensure a submitted category belongs to the intended Expense Group and its signed-in owner.
+- [x] Provide pending, success, and error feedback for creation; preserve entered values after failed saves.
 
 ### 3. Make daily phone use comfortable
 

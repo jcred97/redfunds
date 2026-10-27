@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "npx tsx server/db/seed.ts",
-    "test": "node --import tsx --test tests/lib/money.test.ts tests/db/seed-guard.test.ts tests/db/money-migration.test.ts tests/db/core-model-migration.test.ts tests/lib/auth.test.ts tests/expense-groups/expense-group.access.test.ts tests/expense-groups/category.access.test.ts tests/db/auth-migration.test.ts"
+    "test": "node --import tsx --test tests/lib/money.test.ts tests/lib/expense-date.test.ts tests/db/seed-guard.test.ts tests/db/money-migration.test.ts tests/db/core-model-migration.test.ts tests/lib/auth.test.ts tests/expense-groups/expense-group.access.test.ts tests/expense-groups/category.access.test.ts tests/expense-groups/expense.access.test.ts tests/db/auth-migration.test.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "1.7.12",

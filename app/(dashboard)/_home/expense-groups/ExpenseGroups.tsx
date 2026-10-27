@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
 import { getExpenseGroups } from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
 import NewExpenseGroupButton from "./_components/NewExpenseGroupButton";
 import SignOutButton from "@/app/components/SignOutButton/SignOutButton";
+import ExpenseGroupLink from "./_components/ExpenseGroupLink";
 
 export default async function ExpenseGroups() {
   const expenseGroups = await getExpenseGroups();
@@ -55,7 +55,11 @@ export default async function ExpenseGroups() {
               );
 
               return (
-                <Link key={expenseGroup.id} href={`/spending/${expenseGroup.id}`}>
+                <ExpenseGroupLink
+                  key={expenseGroup.id}
+                  id={expenseGroup.id}
+                  name={expenseGroup.name}
+                >
                   <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-500/50 hover:bg-gray-800/80 transition-all cursor-pointer group">
                     <div className="flex items-start justify-between mb-4">
                       <h3 className="font-semibold text-white text-lg group-hover:text-red-400 transition-colors leading-tight">
@@ -76,7 +80,7 @@ export default async function ExpenseGroups() {
                       <span>{totalExpenses} expenses</span>
                     </div>
                   </div>
-                </Link>
+                </ExpenseGroupLink>
               );
             })}
           </div>

@@ -22,13 +22,16 @@ Implemented source includes:
 
 - Expense-group creation, home cards, and detail/history pages. Existing `/spending/[id]` URLs remain valid.
 - Owner-only category creation and category lists inside each expense group, using the shared accessible name-entry dialog.
+- Owner-only expense entry with a title, peso amount, calendar date, and a category from the current group. Saved history and totals refresh after creation.
 - Email/password sign-up, sign-in, and sign-out through Better Auth, with authenticated server-side queries and actions using Prisma and PostgreSQL.
 - Database-backed authentication rate limiting and private ownership of new expense groups.
 - Philippine peso display formatting.
 
 Sessions last seven days and can renew after one day. Server-rendered pages only validate the session; browser requests renew both the database expiry and the HTTP-only cookie together. A shared browser component checks the session on mount, when the window regains focus or reconnects, and every five minutes while a session exists. Expired or revoked sessions cannot be renewed.
 
-The app is an early prototype. Expense creation is not wired to the New Expense button, the standalone categories page is a placeholder, and email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
+The app is an early prototype. Expense/category editing and deletion, email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
+
+New expense dates represent calendar days. The form defaults to today's date in `Asia/Manila`; selected days are stored at UTC midnight in the existing timestamp column and displayed using UTC so the day does not shift between browser time zones. Existing stored timestamps are not rewritten.
 
 ## Local development
 
@@ -65,7 +68,7 @@ Available scripts:
 
 `Expense.amountCentavos` is a positive PostgreSQL integer. For example, PHP 150.75 is stored as `15075`. A single expense may be at most PHP 21,474,836.47. `app/lib/money.ts` parses decimal strings without floating-point arithmetic, formats peso values, and sums integer centavos with overflow checks. Totals can exceed the single-expense limit while remaining safe JavaScript integers.
 
-New input must be positive, with at most two decimal places; extra decimal places, signs, scientific notation, currency symbols, and grouping commas are rejected rather than silently rounded. Leading/trailing whitespace and leading zeros are accepted. The parser is ready for the future expense form; expense creation is still not implemented.
+New input must be positive, with at most two decimal places; extra decimal places, signs, scientific notation, currency symbols, and grouping commas are rejected rather than silently rounded. Leading/trailing whitespace and leading zeros are accepted. The expense form uses this parser on the server before saving.
 
 For existing databases, `20261022130000_exact_money_centavos` converts legacy float pesos through PostgreSQL `numeric` and rounds once to the nearest centavo (half-centavo ties round up). Invalid/nonfinite amounts, nonpositive values, values rounding to zero, and amounts exceeding the integer limit stop the transaction without dropping the original column. Record IDs, relationships, and dates are unchanged. A database constraint rejects nonpositive centavos.
 

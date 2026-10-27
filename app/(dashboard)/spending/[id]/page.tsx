@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
+import { formatExpenseDate } from "@/app/lib/expense-date";
 import NewCategoryButton from "./_components/NewCategoryButton";
+import NewExpenseButton from "./_components/NewExpenseButton";
 import {
   getExpenseGroupById,
   getExpensesByExpenseGroupId,
@@ -32,8 +34,8 @@ export default async function ExpenseGroupPage({
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
       <header className="border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
               className="text-gray-400 hover:text-white transition-colors text-sm"
@@ -41,18 +43,22 @@ export default async function ExpenseGroupPage({
               ← Back
             </Link>
             <span className="text-gray-700">|</span>
-            <h1 className="text-xl font-bold">{expenseGroup.name}</h1>
+            <h1 className="break-words text-xl font-bold">{expenseGroup.name}</h1>
           </div>
-          <button className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-            + New Expense
-          </button>
+          <NewExpenseButton
+            expenseGroupId={expenseGroup.id}
+            categories={expenseGroup.categories.map((category) => ({
+              id: category.id,
+              name: category.name,
+            }))}
+          />
         </div>
       </header>
 
       {/* Main */}
       <main className="max-w-6xl mx-auto px-6 py-10">
         {/* Summary */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-3">
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Total Spent</p>
             <p className="text-2xl font-bold text-white">
@@ -117,7 +123,7 @@ export default async function ExpenseGroupPage({
             </p>
           </div>
         ) : (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-800">
@@ -148,11 +154,7 @@ export default async function ExpenseGroupPage({
                     className="hover:bg-gray-800/50 transition-colors"
                   >
                     <td className="px-6 py-4 text-sm text-gray-400">
-                      {new Date(expense.date).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {formatExpenseDate(expense.date)}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-white">
                       {expense.title}

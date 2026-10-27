@@ -30,9 +30,9 @@ export default function LoadingScreen({ message }: { message: string }) {
       }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950 px-6 text-white outline-none"
     >
-      <div role="status" className="flex items-center gap-3 text-gray-300">
+      <div role="status" className="flex max-w-full items-center gap-3 text-gray-300">
         <LoadingSpinner />
-        <p>{message}</p>
+        <p className="min-w-0 break-words">{message}</p>
       </div>
     </div>
   );
