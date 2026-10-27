@@ -18,15 +18,17 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-::view-transition-old(.auth-page-fade) {
-  animation: auth-page-fade-out 200ms ease-out both;
+::view-transition-old(.auth-page-fade),
+::view-transition-old(.page-fade) {
+  animation: page-fade-out 200ms ease-out both;
 }
 
-::view-transition-new(.auth-page-fade) {
-  animation: auth-page-fade-in 200ms ease-out both;
+::view-transition-new(.auth-page-fade),
+::view-transition-new(.page-fade) {
+  animation: page-fade-in 200ms ease-out both;
 }
 
-@keyframes auth-page-fade-out {
+@keyframes page-fade-out {
   from {
     opacity: 1;
   }
@@ -35,7 +37,7 @@ body {
   }
 }
 
-@keyframes auth-page-fade-in {
+@keyframes page-fade-in {
   from {
     opacity: 0;
   }

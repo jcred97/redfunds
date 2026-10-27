@@ -31,7 +31,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SessionRefresh />
-        <ViewTransition>
+        <ViewTransition update="page-fade">
           <div className="flex flex-1 flex-col">{children}</div>
         </ViewTransition>
       </body>

@@ -31,7 +31,7 @@ Sessions last seven days and can renew after one day. Server-rendered pages only
 
 The app is an early prototype. Expense deletion, category editing/deletion, email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
 
-Full-screen loading feedback is reserved for sign-in, sign-up, and sign-out. Group navigation uses inline link feedback, and normal route loading uses a lightweight in-page message. Saves and edits keep their pending/error feedback inside the form dialog.
+Full-screen loading feedback is reserved for sign-in, sign-up, and sign-out. Group navigation uses inline link feedback and keeps the current page visible until the destination is ready, allowing a direct page transition without a global loading placeholder. Saves and edits keep their pending/error feedback inside the form dialog.
 
 New expense dates represent calendar days. The form defaults to today's date in `Asia/Manila`; selected days are stored at UTC midnight in the existing timestamp column and displayed using UTC so the day does not shift between browser time zones. Existing stored timestamps are not rewritten.
 
