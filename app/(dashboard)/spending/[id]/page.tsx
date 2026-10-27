@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
+import NewCategoryButton from "./_components/NewCategoryButton";
 import {
   getExpenseGroupById,
   getExpensesByExpenseGroupId,
@@ -69,6 +70,40 @@ export default async function ExpenseGroupPage({
             </p>
           </div>
         </div>
+
+        <section className="mb-8" aria-labelledby="categories-title">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 id="categories-title" className="text-lg font-semibold">
+              Categories
+            </h2>
+            <NewCategoryButton expenseGroupId={expenseGroup.id} />
+          </div>
+
+          {expenseGroup.categories.length === 0 ? (
+            <p className="rounded-xl border border-gray-800 bg-gray-900 p-5 text-sm text-gray-400">
+              No categories yet. Add one such as Food or Transport.
+            </p>
+          ) : (
+            <ul className="flex flex-wrap gap-3">
+              {expenseGroup.categories.map((category) => (
+                <li
+                  key={category.id}
+                  className="min-w-0 max-w-full rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 text-sm"
+                >
+                  <span className="break-words font-medium">
+                    {category.icon && (
+                      <span aria-hidden="true">{category.icon} </span>
+                    )}
+                    {category.name}
+                  </span>
+                  <span className="ml-2 text-gray-400">
+                    {category._count.expenses} expenses
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {/* Table */}
         {expenses.length === 0 ? (

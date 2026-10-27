@@ -21,13 +21,14 @@ The data hierarchy is `User -> ExpenseGroup -> Category -> Expense`. Expense gro
 Implemented source includes:
 
 - Expense-group creation, home cards, and detail/history pages. Existing `/spending/[id]` URLs remain valid.
+- Owner-only category creation and category lists inside each expense group, using the shared accessible name-entry dialog.
 - Email/password sign-up, sign-in, and sign-out through Better Auth, with authenticated server-side queries and actions using Prisma and PostgreSQL.
 - Database-backed authentication rate limiting and private ownership of new expense groups.
 - Philippine peso display formatting.
 
 Sessions last seven days and can renew after one day. Server-rendered pages only validate the session; browser requests renew both the database expiry and the HTTP-only cookie together. A shared browser component checks the session on mount, when the window regains focus or reconnects, and every five minutes while a session exists. Expired or revoked sessions cannot be renewed.
 
-The app is an early prototype. Expense creation is not wired to the New Expense button, the categories page is a placeholder, and email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
+The app is an early prototype. Expense creation is not wired to the New Expense button, the standalone categories page is a placeholder, and email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
 
 ## Local development
 

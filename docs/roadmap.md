@@ -23,7 +23,8 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [x] Apply the auth migration and deploy the matching release; configure production secret/origin, verify database-role/RLS configuration, and check user isolation against the release. Completed October 25, 2026; preserved legacy groups remain unclaimed and hidden.
 - [ ] Configure email delivery, email verification, and password recovery. Google sign-in remains deferred.
 
-- [ ] Implement category creation, editing, and deliberate deletion/archive behavior within a Expense Group.
+- [x] Implement owner-only category creation and category lists within an Expense Group, with server validation and accessible pending/error feedback.
+- [ ] Implement category editing and deliberate deletion/archive behavior within an Expense Group.
 - [ ] Wire New Expense to a working form; add expense creation, editing, and deletion.
 - [ ] Validate title, amount, date, and category on the server. Ensure a submitted category belongs to the intended Expense Group.
 - [ ] Provide pending, success, and error feedback; preserve entered values after failed saves.
