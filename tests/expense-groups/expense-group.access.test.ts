@@ -119,6 +119,9 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
         () => anonymous.delete(a.id),
         () => anonymous.create(null),
         () => anonymous.getById(Number.NaN),
+        () => anonymous.getById(2_147_483_648),
+        () => anonymous.getExpensesById(2_147_483_648),
+        () => anonymous.delete(2_147_483_648),
       ]) {
         await assert.rejects(invoke(), /Sign in required/);
       }
@@ -151,6 +154,24 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       );
     });
 
+    await t.test("the largest PostgreSQL integer remains a valid, private group ID", async () => {
+      const maxId = 2_147_483_647;
+
+      assert.equal(await alice.getById(maxId), null);
+      assert.deepEqual(await alice.getExpensesById(maxId), []);
+      await assert.rejects(alice.delete(maxId), /^Error: Expense group not found$/);
+
+      await client.expenseGroup.create({
+        data: { id: maxId, name: "Maximum valid ID", userId: "alice" },
+      });
+
+      assert.equal((await alice.getById(maxId))?.id, maxId);
+      assert.equal(await bob.getById(maxId), null);
+      await assert.rejects(bob.delete(maxId), /^Error: Expense group not found$/);
+      await alice.delete(maxId);
+      assert.equal(await client.expenseGroup.count(), 3);
+    });
+
     await t.test("invalid IDs and invalid group names are rejected without accessing other data", async () => {
       for (const id of [
         0,
@@ -158,6 +179,8 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
         1.5,
         Number.NaN,
         Infinity,
+        2_147_483_648,
+        Number.MAX_SAFE_INTEGER,
         Number.MAX_SAFE_INTEGER + 1,
       ]) {
         assert.equal(await alice.getById(id), null);

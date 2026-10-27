@@ -1,7 +1,14 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
+// Expense-group IDs use PostgreSQL's signed INTEGER column.
+const MAX_EXPENSE_GROUP_ID = 2_147_483_647;
+
 function validId(id: number) {
-  return Number.isSafeInteger(id) && id > 0;
+  return (
+    Number.isSafeInteger(id) &&
+    id > 0 &&
+    id <= MAX_EXPENSE_GROUP_ID
+  );
 }
 
 // Identity is resolved per operation, never captured at startup or supplied by a browser.
