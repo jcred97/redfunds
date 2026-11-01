@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
 import { getExpenseGroups } from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
 import NewExpenseGroupButton from "./_components/NewExpenseGroupButton";
 import SignOutButton from "@/app/components/SignOutButton/SignOutButton";
 import ExpenseGroupLink from "./_components/ExpenseGroupLink";
+import ExpenseGroupsSkeleton from "./_components/ExpenseGroupsSkeleton";
 
-export default async function ExpenseGroups() {
-  const expenseGroups = await getExpenseGroups();
-
+export default function ExpenseGroups() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
@@ -31,61 +31,73 @@ export default async function ExpenseGroups() {
           </p>
         </div>
 
-        {expenseGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="w-16 h-16 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">💰</span>
-            </div>
-            <p className="text-gray-300 font-medium">No expense groups yet</p>
-            <p className="text-gray-500 text-sm mt-1">
-              Click &quot;+ New&quot; to create your first expense group.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {expenseGroups.map((expenseGroup) => {
-              const totalCentavos = sumCentavos(
-                expenseGroup.categories.flatMap((category) =>
-                  category.expenses.map((expense) => expense.amountCentavos)
-                )
-              );
-              const totalExpenses = expenseGroup.categories.reduce(
-                (expenseCount, category) => expenseCount + category._count.expenses,
-                0
-              );
-
-              return (
-                <ExpenseGroupLink
-                  key={expenseGroup.id}
-                  id={expenseGroup.id}
-                  name={expenseGroup.name}
-                >
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-500/50 hover:bg-gray-800/80 transition-all cursor-pointer group">
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="font-semibold text-white text-lg group-hover:text-red-400 transition-colors leading-tight">
-                        {expenseGroup.name}
-                      </h3>
-                      <span className="text-red-500 text-xs font-medium bg-red-500/10 px-2 py-1 rounded-full shrink-0 ml-2">
-                        Active
-                      </span>
-                    </div>
-
-                    <p className="text-3xl font-bold text-white mb-4 tracking-tight">
-                      {formatPesoAmount(totalCentavos)}
-                    </p>
-
-                    <div className="flex gap-3 text-sm text-gray-400">
-                      <span>{expenseGroup._count.categories} categories</span>
-                      <span>·</span>
-                      <span>{totalExpenses} expenses</span>
-                    </div>
-                  </div>
-                </ExpenseGroupLink>
-              );
-            })}
-          </div>
-        )}
+        <Suspense fallback={<ExpenseGroupsSkeleton />}>
+          <ExpenseGroupCards />
+        </Suspense>
       </main>
     </div>
+  );
+}
+
+async function ExpenseGroupCards() {
+  const expenseGroups = await getExpenseGroups();
+
+  return (
+    <>
+      {expenseGroups.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-32 text-center">
+          <div className="w-16 h-16 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center mb-4">
+            <span className="text-2xl">💰</span>
+          </div>
+          <p className="text-gray-300 font-medium">No expense groups yet</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Click &quot;+ New&quot; to create your first expense group.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {expenseGroups.map((expenseGroup) => {
+            const totalCentavos = sumCentavos(
+              expenseGroup.categories.flatMap((category) =>
+                category.expenses.map((expense) => expense.amountCentavos)
+              )
+            );
+            const totalExpenses = expenseGroup.categories.reduce(
+              (expenseCount, category) => expenseCount + category._count.expenses,
+              0
+            );
+
+            return (
+              <ExpenseGroupLink
+                key={expenseGroup.id}
+                id={expenseGroup.id}
+                name={expenseGroup.name}
+              >
+                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-500/50 hover:bg-gray-800/80 transition-all cursor-pointer group">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="font-semibold text-white text-lg group-hover:text-red-400 transition-colors leading-tight">
+                      {expenseGroup.name}
+                    </h3>
+                    <span className="text-red-500 text-xs font-medium bg-red-500/10 px-2 py-1 rounded-full shrink-0 ml-2">
+                      Active
+                    </span>
+                  </div>
+
+                  <p className="text-3xl font-bold text-white mb-4 tracking-tight">
+                    {formatPesoAmount(totalCentavos)}
+                  </p>
+
+                  <div className="flex gap-3 text-sm text-gray-400">
+                    <span>{expenseGroup._count.categories} categories</span>
+                    <span>·</span>
+                    <span>{totalExpenses} expenses</span>
+                  </div>
+                </div>
+              </ExpenseGroupLink>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }
