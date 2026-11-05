@@ -49,6 +49,27 @@ export function createExpenseAccess(
   requireUserId: () => Promise<string>
 ) {
   return {
+    async delete(expenseGroupId: number, expenseId: number) {
+      const userId = await requireUserId();
+
+      if (!validId(expenseGroupId) || !validId(expenseId)) {
+        throw new TypeError("Expense not found in this expense group");
+      }
+
+      // Ownership and deletion happen in one query, never a separate pre-check.
+      const result = await db.expense.deleteMany({
+        where: {
+          id: expenseId,
+          expenseGroupId,
+          category: { expenseGroup: { userId } },
+        },
+      });
+
+      if (result.count === 0) {
+        throw new TypeError("Expense not found in this expense group");
+      }
+    },
+
     async create(expenseGroupId: number, categoryId: number, input: ExpenseInput) {
       const userId = await requireUserId();
 

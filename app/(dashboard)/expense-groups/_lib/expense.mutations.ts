@@ -9,6 +9,31 @@ const access = createExpenseAccess(prisma, requireUserId);
 
 export type ExpenseActionState = { error: string } | { success: true } | null;
 
+export async function deleteExpense(
+  previousState: ExpenseActionState,
+  formData: FormData
+): Promise<ExpenseActionState> {
+  const rawGroupId = formData.get("expenseGroupId");
+  const rawExpenseId = formData.get("expenseId");
+  const expenseGroupId = typeof rawGroupId === "string" ? Number(rawGroupId) : NaN;
+  const expenseId = typeof rawExpenseId === "string" ? Number(rawExpenseId) : NaN;
+
+  try {
+    await access.delete(expenseGroupId, expenseId);
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { error: error.message };
+    }
+
+    throw error;
+  }
+
+  revalidatePath(`/spending/${expenseGroupId}`);
+  revalidatePath("/");
+
+  return { success: true };
+}
+
 export async function createExpense(
   previousState: ExpenseActionState,
   formData: FormData

@@ -43,7 +43,7 @@ export default async function ExpenseGroupPage({
               ← Back
             </Link>
             <span className="text-gray-700">|</span>
-            <h1 className="break-words text-xl font-bold">{expenseGroup.name}</h1>
+            <h1 id="expense-group-title" tabIndex={-1} className="break-words text-xl font-bold">{expenseGroup.name}</h1>
           </div>
           <NewExpenseButton
             expenseGroupId={expenseGroup.id}

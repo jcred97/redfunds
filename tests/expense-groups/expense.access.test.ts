@@ -431,6 +431,75 @@ test("expense writes validate money, dates, category membership, and current own
         assert.equal(changed.id, bobExpense.id);
       });
     });
+    await t.test("deletion authenticates and atomically checks the expense group owner", async (deleting) => {
+      const target = await alice.create(aliceGroup.id, aliceCategory.id, validInput);
+      const foreign = await bob.create(bobGroup.id, bobCategory.id, validInput);
+      const legacy = await client.expense.create({
+        data: {
+          title: "Preserved legacy expense",
+          amountCentavos: 100,
+          date: new Date("2026-10-27T00:00:00.000Z"),
+          expenseGroupId: unclaimedGroup.id,
+          categoryId: unclaimedCategory.id,
+        },
+      });
+      const notFound = /^TypeError: Expense not found in this expense group$/;
+      const readExpenses = () => client.expense.findMany({ orderBy: { id: "asc" } });
+
+      await deleting.test("foreign, unclaimed, missing, wrong-group and invalid IDs leave all data intact", async () => {
+        const before = await readExpenses();
+        for (const [groupId, expenseId] of [
+          [bobGroup.id, foreign.id],
+          [unclaimedGroup.id, legacy.id],
+          [aliceGroup.id, foreign.id],
+          [aliceGroup.id, legacy.id],
+          [aliceOtherGroup.id, target.id],
+          [aliceGroup.id, 2_147_483_647],
+          [2_147_483_647, target.id],
+        ]) {
+          await assert.rejects(alice.delete(groupId, expenseId), notFound);
+        }
+        await assert.rejects(bob.delete(aliceGroup.id, target.id), notFound);
+        for (const id of [0, -1, 1.5, NaN, Infinity, 2_147_483_648, Number.MAX_SAFE_INTEGER]) {
+          await assert.rejects(alice.delete(id, target.id), notFound);
+          await assert.rejects(alice.delete(aliceGroup.id, id), notFound);
+        }
+        await assert.rejects(anonymous.delete(aliceGroup.id, target.id), /^Error: Sign in required$/);
+        await assert.rejects(anonymous.delete(NaN, 2_147_483_648), /^Error: Sign in required$/);
+        assert.deepEqual(await readExpenses(), before);
+      });
+
+      await deleting.test("only the chosen expense is deleted; categories, groups and remaining totals are preserved", async () => {
+        const before = await readExpenses();
+        const groups = await client.expenseGroup.findMany({ orderBy: { id: "asc" } });
+        const categories = await client.category.findMany({ orderBy: { id: "asc" } });
+        await alice.delete(aliceGroup.id, target.id);
+        const remaining = before.filter((expense) => expense.id !== target.id);
+        assert.deepEqual(await readExpenses(), remaining);
+        assert.deepEqual(await client.expenseGroup.findMany({ orderBy: { id: "asc" } }), groups);
+        assert.deepEqual(await client.category.findMany({ orderBy: { id: "asc" } }), categories);
+        const groupExpenses = await client.expense.findMany({ where: { expenseGroupId: aliceGroup.id } });
+        assert.equal(
+          sumCentavos(groupExpenses.map((expense) => expense.amountCentavos)),
+          sumCentavos(before.filter((expense) => expense.expenseGroupId === aliceGroup.id).map((expense) => expense.amountCentavos)) - target.amountCentavos,
+        );
+        await assert.rejects(alice.delete(aliceGroup.id, target.id), notFound);
+        assert.deepEqual(await readExpenses(), remaining);
+      });
+
+      await deleting.test("each deletion resolves its current session owner", async () => {
+        let currentUser = "alice";
+        const access = createExpenseAccess(client, async () => currentUser);
+        const owned = await alice.create(aliceGroup.id, aliceCategory.id, validInput);
+        await access.delete(aliceGroup.id, owned.id);
+        currentUser = "bob";
+        const another = await alice.create(aliceGroup.id, aliceCategory.id, validInput);
+        await assert.rejects(access.delete(aliceGroup.id, another.id), notFound);
+        assert.ok(await client.expense.findUnique({ where: { id: another.id } }));
+        await access.delete(bobGroup.id, foreign.id);
+        assert.equal(await client.expense.findUnique({ where: { id: foreign.id } }), null);
+      });
+    });
   } finally {
     await prisma?.$disconnect();
     await server.stop();

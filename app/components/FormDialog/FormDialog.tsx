@@ -16,7 +16,9 @@ type FormDialogProps = {
   triggerLabel: string;
   triggerAriaLabel?: string;
   triggerFocusKey?: string;
-  triggerVariant?: "primary" | "secondary";
+  triggerVariant?: "primary" | "secondary" | "danger";
+  destructive?: boolean;
+  returnFocusId?: string;
   title: string;
   description: string;
   children: ReactNode;
@@ -36,6 +38,8 @@ export default function FormDialog({
   triggerAriaLabel,
   triggerFocusKey,
   triggerVariant = "primary",
+  destructive = false,
+  returnFocusId,
   title,
   description,
   children,
@@ -61,10 +65,21 @@ export default function FormDialog({
     }
 
     const dialog = dialogRef.current;
+    const trigger = triggerRef.current;
     dialog?.showModal();
 
-    return () => dialog?.close();
-  }, [open]);
+    return () => {
+      dialog?.close();
+      // Deleting an item also removes its trigger. Focus the surviving list heading.
+      if (returnFocusId) {
+        queueMicrotask(() => {
+          if (!trigger?.isConnected) {
+            document.getElementById(returnFocusId)?.focus();
+          }
+        });
+      }
+    };
+  }, [open, returnFocusId]);
 
   function openDialog() {
     if (disabled || submitting.current || pending || open) {
@@ -159,6 +174,11 @@ export default function FormDialog({
       "cursor-pointer rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 transition-colors hover:border-gray-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50";
   }
 
+  if (triggerVariant === "danger") {
+    triggerClass =
+      "cursor-pointer rounded-lg border border-red-500/30 px-3 py-2 text-sm text-red-400 transition-colors hover:border-red-400 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50";
+  }
+
   return (
     <>
       <button
@@ -226,6 +246,7 @@ export default function FormDialog({
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
+                  autoFocus={destructive}
                   onClick={closeDialog}
                   disabled={pending}
                   className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-50"

@@ -23,13 +23,14 @@ Implemented source includes:
 - Expense-group creation, home cards, and detail/history pages. Existing `/spending/[id]` URLs remain valid.
 - Owner-only category creation and category lists inside each expense group, using the shared accessible name-entry dialog.
 - Owner-only expense entry and editing with a title, peso amount, calendar date, and a category from the current group. Saved history and totals refresh after changes. Phone screens use compact expense cards; desktop screens retain the table.
+- Owner-only expense deletion with a confirmation showing the title and exact amount. Cancel receives initial focus; pending requests block duplicate submissions and dismissal. Deleting refreshes history and totals without removing the category or expense group.
 - Email/password sign-up, sign-in, and sign-out through Better Auth, with authenticated server-side queries and actions using Prisma and PostgreSQL.
 - Database-backed authentication rate limiting and private ownership of new expense groups.
 - Philippine peso display formatting.
 
 Sessions last seven days and can renew after one day. Server-rendered pages only validate the session; browser requests renew both the database expiry and the HTTP-only cookie together. A shared browser component checks the session on mount, when the window regains focus or reconnects, and every five minutes while a session exists. Expired or revoked sessions cannot be renewed.
 
-The app is an early prototype. Expense deletion, category editing/deletion, email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
+The app is an early prototype. Category editing/deletion, email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
 
 Full-screen loading feedback is reserved for sign-in, sign-up, and sign-out. After successful authentication and navigation, the home header stays visible while expense-group cards load into a skeleton. Expense-group navigation shows a page-shaped skeleton inside the signed-in layout while its data loads. Skeletons crossfade into content, respect reduced motion, and never display made-up amounts or names. There is no global loading placeholder. Saves and edits keep their pending/error feedback inside the form dialog.
 

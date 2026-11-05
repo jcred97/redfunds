@@ -2,6 +2,7 @@ import type { getExpensesByExpenseGroupId } from "@/app/(dashboard)/expense-grou
 import { formatPesoAmount } from "@/app/lib/money";
 import { formatExpenseDate } from "@/app/lib/expense-date";
 import EditExpenseButton from "./EditExpenseButton";
+import DeleteExpenseButton from "./DeleteExpenseButton";
 
 type ExpenseHistoryProps = {
   expenseGroupId: number;
@@ -14,19 +15,29 @@ export default function ExpenseHistory({
   categories,
   expenses,
 }: ExpenseHistoryProps) {
-  function editButton(expense: ExpenseHistoryProps["expenses"][number]) {
+  function expenseActions(expense: ExpenseHistoryProps["expenses"][number]) {
     return (
-      <EditExpenseButton
-        expenseGroupId={expenseGroupId}
-        categories={categories}
-        expense={{
-          id: expense.id,
-          title: expense.title,
-          amountCentavos: expense.amountCentavos,
-          date: expense.date.toISOString(),
-          categoryId: expense.categoryId,
-        }}
-      />
+      <div className="flex flex-wrap justify-end gap-2">
+        <EditExpenseButton
+          expenseGroupId={expenseGroupId}
+          categories={categories}
+          expense={{
+            id: expense.id,
+            title: expense.title,
+            amountCentavos: expense.amountCentavos,
+            date: expense.date.toISOString(),
+            categoryId: expense.categoryId,
+          }}
+        />
+        <DeleteExpenseButton
+          expenseGroupId={expenseGroupId}
+          expense={{
+            id: expense.id,
+            title: expense.title,
+            amountCentavos: expense.amountCentavos,
+          }}
+        />
+      </div>
     );
   }
 
@@ -50,7 +61,7 @@ export default function ExpenseHistory({
             <p className="mt-2 break-words text-sm text-gray-400">
               {formatExpenseDate(expense.date)} · {expense.category.name}
             </p>
-            <div className="mt-3 flex justify-end">{editButton(expense)}</div>
+            <div className="mt-3 flex justify-end">{expenseActions(expense)}</div>
           </li>
         ))}
       </ul>
@@ -87,7 +98,7 @@ export default function ExpenseHistory({
                 <td className="px-6 py-4 text-right font-semibold text-red-400">
                   {formatPesoAmount(expense.amountCentavos)}
                 </td>
-                <td className="px-6 py-4">{editButton(expense)}</td>
+                <td className="px-6 py-4">{expenseActions(expense)}</td>
               </tr>
             ))}
           </tbody>
