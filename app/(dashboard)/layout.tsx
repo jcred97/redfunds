@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { requireUser } from "@/app/lib/session";
-import SignOutButton from "@/app/components/SignOutButton/SignOutButton";
+import { requireUser } from "@/app/lib/auth/session";
+import SignOutButton from "@/app/components/auth/SignOutButton";
 
 export default async function DashboardLayout({
   children,

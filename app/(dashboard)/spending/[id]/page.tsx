@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
-import CategoryActions from "./_components/CategoryActions";
-import ExpenseHistory from "./_components/ExpenseHistory";
-import NewCategoryButton from "./_components/NewCategoryButton";
-import NewExpenseButton from "./_components/NewExpenseButton";
+import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
+import CategoryActions from "./_components/categories/CategoryActions";
+import ExpenseHistory from "./_components/expenses/ExpenseHistory";
+import NewCategoryButton from "./_components/categories/NewCategoryButton";
+import NewExpenseButton from "./_components/expenses/NewExpenseButton";
 import {
   getExpenseGroupById,
   getExpensesByExpenseGroupId,
-} from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
+} from "@/app/(dashboard)/_lib/expense-groups/queries";
 
 export default async function ExpenseGroupPage({
   params,

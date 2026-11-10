@@ -1,7 +1,7 @@
 "use client";
 
-import CreateNameDialog from "@/app/components/CreateNameDialog/CreateNameDialog";
-import { createExpenseGroup } from "@/app/(dashboard)/expense-groups/_lib/expense-group.mutations";
+import CreateNameDialog from "@/app/components/dialogs/CreateNameDialog";
+import { createExpenseGroup } from "@/app/(dashboard)/_lib/expense-groups/mutations";
 
 export default function NewExpenseGroupButton() {
   return (

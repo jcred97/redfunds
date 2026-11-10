@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ViewTransition } from "react";
-import SessionRefresh from "@/app/components/SessionRefresh/SessionRefresh";
+import SessionRefresh from "@/app/components/auth/SessionRefresh";
 import "./globals.css";
 
 const geistSans = Geist({

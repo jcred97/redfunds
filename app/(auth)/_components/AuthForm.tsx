@@ -9,8 +9,8 @@ import {
   ViewTransition,
   type FormEvent,
 } from "react";
-import { authClient } from "@/app/lib/auth-client";
-import LoadingScreen from "@/app/components/LoadingScreen/LoadingScreen";
+import { authClient } from "@/app/lib/auth/client";
+import LoadingScreen from "@/app/components/feedback/LoadingScreen";
 
 export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();

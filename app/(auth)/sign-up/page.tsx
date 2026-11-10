@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/app/lib/session";
+import { getCurrentUser } from "@/app/lib/auth/session";
 import AuthForm from "../_components/AuthForm";
 
 export default async function SignUpPage() {

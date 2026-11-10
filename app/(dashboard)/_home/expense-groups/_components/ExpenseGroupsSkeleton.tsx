@@ -1,4 +1,4 @@
-import Skeleton from "@/app/components/Skeleton/Skeleton";
+import Skeleton from "@/app/components/feedback/Skeleton";
 
 export default function ExpenseGroupsSkeleton() {
   return (

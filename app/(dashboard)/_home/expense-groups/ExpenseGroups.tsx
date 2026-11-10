@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
-import { getExpenseGroups } from "@/app/(dashboard)/expense-groups/_lib/expense-group.queries";
+import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
+import { getExpenseGroups } from "@/app/(dashboard)/_lib/expense-groups/queries";
 import NewExpenseGroupButton from "./_components/NewExpenseGroupButton";
-import SignOutButton from "@/app/components/SignOutButton/SignOutButton";
+import SignOutButton from "@/app/components/auth/SignOutButton";
 import ExpenseGroupLink from "./_components/ExpenseGroupLink";
 import ExpenseGroupsSkeleton from "./_components/ExpenseGroupsSkeleton";
 

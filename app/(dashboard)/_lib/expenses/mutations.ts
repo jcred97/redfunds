@@ -1,0 +1,106 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/server/db/client";
+import { requireUserId } from "@/app/lib/auth/session";
+import { createExpenseAccess } from "./access";
+
+const access = createExpenseAccess(prisma, requireUserId);
+
+export type ExpenseActionState = { error: string } | { success: true } | null;
+
+export async function deleteExpense(
+  previousState: ExpenseActionState,
+  formData: FormData
+): Promise<ExpenseActionState> {
+  const rawGroupId = formData.get("expenseGroupId");
+  const rawExpenseId = formData.get("expenseId");
+  const expenseGroupId = typeof rawGroupId === "string" ? Number(rawGroupId) : NaN;
+  const expenseId = typeof rawExpenseId === "string" ? Number(rawExpenseId) : NaN;
+
+  try {
+    await access.delete(expenseGroupId, expenseId);
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { error: error.message };
+    }
+
+    throw error;
+  }
+
+  revalidatePath(`/spending/${expenseGroupId}`);
+  revalidatePath("/");
+
+  return { success: true };
+}
+
+export async function createExpense(
+  previousState: ExpenseActionState,
+  formData: FormData
+): Promise<ExpenseActionState> {
+  const rawGroupId = formData.get("expenseGroupId");
+  const rawCategoryId = formData.get("categoryId");
+  const expenseGroupId = typeof rawGroupId === "string" ? Number(rawGroupId) : NaN;
+  const categoryId = typeof rawCategoryId === "string" ? Number(rawCategoryId) : NaN;
+
+  try {
+    await access.create(
+      expenseGroupId,
+      categoryId,
+      {
+        title: formData.get("title"),
+        amount: formData.get("amount"),
+        date: formData.get("date"),
+      },
+      formData.get("submissionId"),
+    );
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { error: error.message };
+    }
+
+    throw error;
+  }
+
+  revalidatePath(`/spending/${expenseGroupId}`);
+  revalidatePath("/");
+
+  return { success: true };
+}
+
+export async function updateExpense(
+  previousState: ExpenseActionState,
+  formData: FormData
+): Promise<ExpenseActionState> {
+  const rawGroupId = formData.get("expenseGroupId");
+  const rawExpenseId = formData.get("expenseId");
+  const rawCategoryId = formData.get("categoryId");
+  const expenseGroupId = typeof rawGroupId === "string" ? Number(rawGroupId) : NaN;
+  const expenseId = typeof rawExpenseId === "string" ? Number(rawExpenseId) : NaN;
+  const categoryId = typeof rawCategoryId === "string" ? Number(rawCategoryId) : NaN;
+
+  try {
+    await access.update(
+      expenseGroupId,
+      expenseId,
+      categoryId,
+      {
+        title: formData.get("title"),
+        amount: formData.get("amount"),
+        date: formData.get("date"),
+      },
+      formData.get("expectedUpdatedAt"),
+    );
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { error: error.message };
+    }
+
+    throw error;
+  }
+
+  revalidatePath(`/spending/${expenseGroupId}`);
+  revalidatePath("/");
+
+  return { success: true };
+}

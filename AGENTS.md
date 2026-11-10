@@ -14,3 +14,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Verify the change through its normal entry point and cover relevant failure cases.
 - Write code that people can read easily. Use descriptive names and straightforward control flow. Use comments to explain decisions that are hard to infer from the code.
 - Always remove temporary files you create for a task once they are no longer needed. Clean them up before finishing, even if a command fails.
+
+## Repository structure
+
+- Group related files by feature or purpose. Use short role names within each folder, such as `access.ts`, `mutations.ts`, and `queries.ts`. Give React component files the same descriptive name as their component.
+- Keep feature code beside its routes in private folders such as `_components` and `_lib`. Group reusable UI by purpose in `app/components/` and shared helpers by feature in `app/lib/`. Preserve Next.js entry points and public URLs when moving internal files.
+- Keep the Prisma client, schema, migrations, and seed tooling under `server/db/`. Preserve existing migration paths and history when reorganizing code.
+- Group tests under `tests/` by the feature or responsibility they cover. When moving files, update their imports, affected npm scripts, and the repository map in `README.md`.

@@ -69,7 +69,7 @@ Available scripts:
 
 ### Exact money and migration
 
-`Expense.amountCentavos` is a positive PostgreSQL integer. For example, PHP 150.75 is stored as `15075`. A single expense may be at most PHP 21,474,836.47. `app/lib/money.ts` parses decimal strings without floating-point arithmetic, formats peso values, and sums integer centavos with overflow checks. Totals can exceed the single-expense limit while remaining safe JavaScript integers.
+`Expense.amountCentavos` is a positive PostgreSQL integer. For example, PHP 150.75 is stored as `15075`. A single expense may be at most PHP 21,474,836.47. `app/lib/expenses/money.ts` parses decimal strings without floating-point arithmetic, formats peso values, and sums integer centavos with overflow checks. Totals can exceed the single-expense limit while remaining safe JavaScript integers.
 
 New input must be positive, with at most two decimal places; extra decimal places, signs, scientific notation, currency symbols, and grouping commas are rejected rather than silently rounded. Leading/trailing whitespace and leading zeros are accepted. The expense form uses this parser on the server before saving.
 
@@ -115,28 +115,27 @@ Authenticated pages render per request because their session check uses request 
 | --- | --- |
 | `app/` | Route entry points, root layout, and global styles |
 | `app/(dashboard)/_home/expense-groups/` | Home expense-group section and its private `_components/` |
-| `app/(dashboard)/expense-groups/_lib/` | Expense-group database queries and server actions |
-| `app/(dashboard)/spending/[id]/` | Expense-group detail/history route; existing URLs retained |
+| `app/(dashboard)/_lib/` | Database access, queries, and server actions grouped by category, expense group, and expense |
+| `app/(dashboard)/spending/[id]/` | Expense-group detail and history route with category and expense component folders |
 | `app/(dashboard)/categories/` | Categories route placeholder |
 | `app/(auth)/` | Sign-up and sign-in routes and shared form |
 | `app/api/auth/[...all]/` | Better Auth HTTP handler |
-| `app/lib/auth-config.ts` | Better Auth configuration and Prisma adapter |
-| `app/lib/auth.ts`, `app/lib/session.ts` | Server-only auth instance and session checks |
-| `app/lib/auth-client.ts` | Same-origin browser auth client |
-| `app/lib/prisma.ts` | Shared runtime database client |
-| `app/lib/money.ts` | Exact centavo parsing, formatting, and totals |
+| `app/lib/auth/` | Better Auth configuration, browser and server clients, and session checks |
+| `app/lib/expenses/` | Expense dates and exact centavo parsing, formatting, and totals |
+| `app/components/` | Shared auth, dialog, and feedback components |
+| `server/db/client.ts` | Shared runtime database client |
 | `server/db/schema.prisma` | Data model |
 | `server/db/migrations/` | Database migration history |
-| `server/db/seed.ts` | Destructive demonstration-data seed |
-| `tests/lib/` | Money and authentication tests |
-| `tests/expense-groups/` | Expense-group ownership and access tests |
-| `tests/db/` | Seed-guard and database migration tests |
+| `server/db/seed/` | Destructive demonstration-data seed and reset guard |
+| `tests/auth/` | Authentication and session tests |
+| `tests/categories/`, `tests/expense-groups/`, `tests/expenses/` | Feature access, expense date, and money tests |
+| `tests/db/` | Migration and seed tests grouped by responsibility |
 | `docs/roadmap.md` | Planned milestones and completion criteria |
 | `docs/data-model.md` | Core model, integrity rules, and preservation strategy |
 
-Application code follows the same conventions as `johncarlored.com`: root `app/`, grouped feature routes, private `_home` sections, and route-local `_components` and `_lib` folders. `app/page.tsx` composes the home section. Shared helpers belong in `app/lib/`; shared UI belongs in `app/components/ComponentName/ComponentName.tsx` when used across features. Keep feature-specific components beside their feature, using a named subfolder when a component needs supporting files.
+Application code uses grouped feature routes, private `_home` sections, and `_components` and `_lib` folders. `app/page.tsx` composes the home section. Group related files by feature and use short role names such as `access.ts` and `mutations.ts` for implementation modules. Use descriptive component names that match their filenames. Keep feature UI beside its route and group reusable UI by purpose under `app/components/`.
 
-Prisma schema, migrations, and seed tooling remain in `server/db/`; generated client output remains in the ignored root `generated/` folder. Runtime database access lives in `app/lib/prisma.ts`. The `@/*` alias continues to resolve from the repository root. Folder groups and private folders do not add URL segments.
+The Prisma schema, migration history, runtime client, and seed tooling live in `server/db/`. Prisma generates its client into the ignored root `generated/` folder. The `@/*` alias resolves from the repository root. Route groups and private folders keep URLs stable as internal files move.
 
 Keep automated test files under the root `tests/` directory, grouped by the area they cover, so application folders contain implementation code. Tests import the implementation from `app/` or `server/`. When adding a test file, include its path in the `npm test` script.
 

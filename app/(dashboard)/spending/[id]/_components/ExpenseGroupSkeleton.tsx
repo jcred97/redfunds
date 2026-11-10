@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Skeleton from "@/app/components/Skeleton/Skeleton";
+import Skeleton from "@/app/components/feedback/Skeleton";
 
 export default function ExpenseGroupSkeleton() {
   return (
