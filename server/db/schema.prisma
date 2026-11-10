@@ -23,16 +23,17 @@ enum PaymentMethod {
 }
 
 model ExpenseGroup {
-  id              Int              @id @default(autoincrement())
-  name            String
-  categories      Category[]
-  budgets         Budget[]
-  bankAssignments BankAssignment[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  categories         Category[]
+  budgets            Budget[]
+  bankAssignments    BankAssignment[]
+  expenseSubmissions ExpenseSubmission[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   // Null means preserved, unclaimed legacy data; never visible to signed-in users.
-  userId          String?
-  user            User?            @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  userId             String?
+  user               User?               @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([userId])
   @@map("Spending")
@@ -66,10 +67,23 @@ model Expense {
   bankAssignment   BankAssignment? @relation(fields: [bankAssignmentId, expenseGroupId], references: [id, expenseGroupId], onDelete: Restrict, onUpdate: Cascade)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  submission       ExpenseSubmission?
 
   @@index([expenseGroupId, date])
   @@index([categoryId, expenseGroupId])
   @@index([bankAssignmentId, expenseGroupId])
+}
+
+model ExpenseSubmission {
+  id             String       @db.Uuid
+  expenseGroupId Int
+  expenseGroup   ExpenseGroup @relation(fields: [expenseGroupId], references: [id], onDelete: Cascade)
+  payloadHash    String
+  // Keep the submission after expense deletion so a late retry cannot recreate it.
+  expenseId      Int?         @unique
+  expense        Expense?     @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+
+  @@id([expenseGroupId, id])
 }
 
 // Monthly targets for now, matching the Salesforce application.

@@ -44,11 +44,16 @@ export async function createExpense(
   const categoryId = typeof rawCategoryId === "string" ? Number(rawCategoryId) : NaN;
 
   try {
-    await access.create(expenseGroupId, categoryId, {
-      title: formData.get("title"),
-      amount: formData.get("amount"),
-      date: formData.get("date"),
-    });
+    await access.create(
+      expenseGroupId,
+      categoryId,
+      {
+        title: formData.get("title"),
+        amount: formData.get("amount"),
+        date: formData.get("date"),
+      },
+      formData.get("submissionId"),
+    );
   } catch (error) {
     if (error instanceof TypeError) {
       return { error: error.message };

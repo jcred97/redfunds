@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -74,7 +75,7 @@ test("expense writes validate money, dates, category membership, and current own
     const validInput = { title: "  Lunch  ", amount: "150.75", date: "2026-10-27" };
 
     await t.test("owners can save exact centavos and calendar dates in their own category", async () => {
-      const expense = await alice.create(aliceGroup.id, aliceCategory.id, validInput);
+      const expense = await alice.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID());
 
       assert.equal(expense.title, "Lunch");
       assert.equal(expense.amountCentavos, 15075);
@@ -99,12 +100,12 @@ test("expense writes validate money, dates, category membership, and current own
         [2_147_483_647, aliceCategory.id],
       ]) {
         await assert.rejects(
-          alice.create(groupId, categoryId, validInput),
+          alice.create(groupId, categoryId, validInput, randomUUID()),
           /^TypeError: Category not found in this expense group$/,
         );
       }
       await assert.rejects(
-        bob.create(aliceGroup.id, aliceCategory.id, validInput),
+        bob.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID()),
         /^TypeError: Category not found in this expense group$/,
       );
 
@@ -113,7 +114,7 @@ test("expense writes validate money, dates, category membership, and current own
 
     await t.test("authentication precedes every input validation", async () => {
       await assert.rejects(
-        anonymous.create(aliceGroup.id, aliceCategory.id, validInput),
+        anonymous.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID()),
         /^Error: Sign in required$/,
       );
       await assert.rejects(
@@ -121,18 +122,18 @@ test("expense writes validate money, dates, category membership, and current own
           title: null,
           amount: null,
           date: null,
-        }),
+        }, null),
         /^Error: Sign in required$/,
       );
       assert.equal(await client.expense.count(), 1);
     });
 
-    await t.test("invalid titles, money, dates, and oversized IDs do not save anything", async () => {
+    await t.test("invalid titles, money, dates, and IDs do not save anything", async () => {
       const before = await client.expense.count();
 
       for (const title of [null, "", "  ", "x".repeat(101), { userId: "bob" }]) {
         await assert.rejects(
-          alice.create(aliceGroup.id, aliceCategory.id, { ...validInput, title }),
+          alice.create(aliceGroup.id, aliceCategory.id, { ...validInput, title }, randomUUID()),
           TypeError,
         );
       }
@@ -150,7 +151,7 @@ test("expense writes validate money, dates, category membership, and current own
         "21474836.48",
       ]) {
         await assert.rejects(
-          alice.create(aliceGroup.id, aliceCategory.id, { ...validInput, amount }),
+          alice.create(aliceGroup.id, aliceCategory.id, { ...validInput, amount }, randomUUID()),
           TypeError,
         );
       }
@@ -164,7 +165,7 @@ test("expense writes validate money, dates, category membership, and current own
         "2026-10-27T00:00:00Z",
       ]) {
         await assert.rejects(
-          alice.create(aliceGroup.id, aliceCategory.id, { ...validInput, date }),
+          alice.create(aliceGroup.id, aliceCategory.id, { ...validInput, date }, randomUUID()),
           TypeError,
         );
       }
@@ -178,8 +179,15 @@ test("expense writes validate money, dates, category membership, and current own
         2_147_483_648,
         Number.MAX_SAFE_INTEGER,
       ]) {
-        await assert.rejects(alice.create(id, aliceCategory.id, validInput), TypeError);
-        await assert.rejects(alice.create(aliceGroup.id, id, validInput), TypeError);
+        await assert.rejects(alice.create(id, aliceCategory.id, validInput, randomUUID()), TypeError);
+        await assert.rejects(alice.create(aliceGroup.id, id, validInput, randomUUID()), TypeError);
+      }
+
+      for (const submissionId of [null, "invalid", randomUUID() + "\n"]) {
+        await assert.rejects(
+          alice.create(aliceGroup.id, aliceCategory.id, validInput, submissionId),
+          /Unable to identify this draft/,
+        );
       }
 
       assert.equal(await client.expense.count(), before);
@@ -190,17 +198,17 @@ test("expense writes validate money, dates, category membership, and current own
         title: "Ten centavos",
         amount: "0.10",
         date: "2024-02-29",
-      });
+      }, randomUUID());
       const second = await alice.create(aliceGroup.id, aliceCategory.id, {
         title: "Twenty centavos",
         amount: "0.20",
         date: "2024-02-29",
-      });
+      }, randomUUID());
       const maximum = await alice.create(aliceGroup.id, aliceCategory.id, {
         title: "x".repeat(100),
         amount: "21474836.47",
         date: "2026-12-31",
-      });
+      }, randomUUID());
 
       assert.equal(sumCentavos([first.amountCentavos, second.amountCentavos]), 30);
       assert.equal(first.date.toISOString(), "2024-02-29T00:00:00.000Z");
@@ -211,15 +219,76 @@ test("expense writes validate money, dates, category membership, and current own
     await t.test("each write resolves the current identity rather than retaining an earlier owner", async () => {
       let currentUser = "alice";
       const access = createExpenseAccess(client, async () => currentUser);
-      await access.create(aliceGroup.id, aliceCategory.id, validInput);
+      await access.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID());
 
       currentUser = "bob";
       await assert.rejects(
-        access.create(aliceGroup.id, aliceCategory.id, validInput),
+        access.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID()),
         /Category not found in this expense group/,
       );
-      const bobExpense = await access.create(bobGroup.id, bobCategory.id, validInput);
+      const bobExpense = await access.create(bobGroup.id, bobCategory.id, validInput, randomUUID());
       assert.equal(bobExpense.expenseGroupId, bobGroup.id);
+    });
+
+    await t.test("retrying the same submission returns the original expense and adds to totals once", async () => {
+      const submissionId = randomUUID();
+      const input = { ...validInput, title: "Retry lunch" };
+      const save = () => alice.create(aliceGroup.id, aliceCategory.id, input, submissionId);
+
+      const [original, overlappingRetry] = await Promise.all([save(), save()]);
+      const laterRetry = await save();
+      assert.equal(overlappingRetry.id, original.id);
+      assert.equal(laterRetry.id, original.id);
+
+      const saved = await client.expense.findMany({
+        where: { expenseGroupId: aliceGroup.id, title: input.title },
+      });
+      assert.equal(saved.length, 1);
+      assert.equal(sumCentavos(saved.map((expense) => expense.amountCentavos)), 15075);
+      await assert.rejects(
+        bob.create(aliceGroup.id, aliceCategory.id, input, submissionId),
+        /Category not found in this expense group/,
+      );
+    });
+
+    await t.test("two intentional submissions with identical details create two expenses", async () => {
+      const input = { ...validInput, title: "Two lunches" };
+      const first = await alice.create(aliceGroup.id, aliceCategory.id, input, randomUUID());
+      const second = await alice.create(aliceGroup.id, aliceCategory.id, input, randomUUID());
+
+      const saved = await client.expense.findMany({
+        where: { expenseGroupId: aliceGroup.id, title: input.title },
+        orderBy: { id: "asc" },
+      });
+      assert.notEqual(first.id, second.id);
+      assert.deepEqual(saved.map((expense) => expense.id), [first.id, second.id]);
+      assert.equal(sumCentavos(saved.map((expense) => expense.amountCentavos)), 30150);
+    });
+
+    await t.test("a failed write leaves the submission available for a corrected retry", async () => {
+      const submissionId = randomUUID();
+      await assert.rejects(
+        alice.create(aliceGroup.id, aliceOtherCategory.id, validInput, submissionId),
+        /Category not found in this expense group/,
+      );
+      const expense = await alice.create(aliceGroup.id, aliceCategory.id, validInput, submissionId);
+      assert.equal(expense.categoryId, aliceCategory.id);
+    });
+
+    await t.test("an already saved draft cannot write different details or recreate a deleted expense", async () => {
+      const submissionId = randomUUID();
+      const input = { ...validInput, title: "Deleted lunch" };
+      const expense = await alice.create(aliceGroup.id, aliceCategory.id, input, submissionId);
+      await assert.rejects(
+        alice.create(aliceGroup.id, aliceCategory.id, { ...input, amount: "75.00" }, submissionId),
+        /already saved with different details/,
+      );
+      await alice.delete(aliceGroup.id, expense.id);
+      await assert.rejects(
+        alice.create(aliceGroup.id, aliceCategory.id, input, submissionId),
+        /already saved and has since been deleted/,
+      );
+      assert.equal(await client.expense.count({ where: { title: input.title } }), 0);
     });
 
     await t.test("editing checks the original expense and its replacement category without losing history", async (editing) => {
@@ -432,8 +501,8 @@ test("expense writes validate money, dates, category membership, and current own
       });
     });
     await t.test("deletion authenticates and atomically checks the expense group owner", async (deleting) => {
-      const target = await alice.create(aliceGroup.id, aliceCategory.id, validInput);
-      const foreign = await bob.create(bobGroup.id, bobCategory.id, validInput);
+      const target = await alice.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID());
+      const foreign = await bob.create(bobGroup.id, bobCategory.id, validInput, randomUUID());
       const legacy = await client.expense.create({
         data: {
           title: "Preserved legacy expense",
@@ -490,10 +559,10 @@ test("expense writes validate money, dates, category membership, and current own
       await deleting.test("each deletion resolves its current session owner", async () => {
         let currentUser = "alice";
         const access = createExpenseAccess(client, async () => currentUser);
-        const owned = await alice.create(aliceGroup.id, aliceCategory.id, validInput);
+        const owned = await alice.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID());
         await access.delete(aliceGroup.id, owned.id);
         currentUser = "bob";
-        const another = await alice.create(aliceGroup.id, aliceCategory.id, validInput);
+        const another = await alice.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID());
         await assert.rejects(access.delete(aliceGroup.id, another.id), notFound);
         assert.ok(await client.expense.findUnique({ where: { id: another.id } }));
         await access.delete(bobGroup.id, foreign.id);

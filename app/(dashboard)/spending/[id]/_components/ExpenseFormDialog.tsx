@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import FormDialog from "@/app/components/FormDialog/FormDialog";
 import {
   createExpense,
@@ -29,6 +29,7 @@ export default function ExpenseFormDialog({
   expense,
 }: ExpenseFormDialogProps) {
   const fieldId = useId();
+  const submissionId = useRef("");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
@@ -42,6 +43,7 @@ export default function ExpenseFormDialog({
       setDate(expense.date.slice(0, 10));
       setCategoryId(String(expense.categoryId));
     } else {
+      submissionId.current = crypto.randomUUID();
       setTitle("");
       setAmount("");
       setDate(getManilaToday());
@@ -58,6 +60,7 @@ export default function ExpenseFormDialog({
       return updateExpense(null, formData);
     }
 
+    formData.set("submissionId", submissionId.current);
     return createExpense(null, formData);
   }
 

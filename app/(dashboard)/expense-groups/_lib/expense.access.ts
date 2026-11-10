@@ -1,8 +1,11 @@
+import { createHash } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { parsePesoAmount } from "@/app/lib/money";
 import { parseExpenseDate } from "@/app/lib/expense-date";
 
 const MAX_RECORD_ID = 2_147_483_647;
+const SUBMISSION_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ExpenseInput = {
   title: unknown;
@@ -70,37 +73,88 @@ export function createExpenseAccess(
       }
     },
 
-    async create(expenseGroupId: number, categoryId: number, input: ExpenseInput) {
+    async create(
+      expenseGroupId: number,
+      categoryId: number,
+      input: ExpenseInput,
+      submissionId: unknown
+    ) {
       const userId = await requireUserId();
 
       if (!validId(expenseGroupId) || !validId(categoryId)) {
         throw new TypeError("Category not found in this expense group");
       }
 
+      if (
+        typeof submissionId !== "string" ||
+        submissionId.length !== 36 ||
+        !SUBMISSION_ID_PATTERN.test(submissionId)
+      ) {
+        throw new TypeError("Unable to identify this draft. Refresh the page and try again.");
+      }
+
       const values = parseExpenseInput(input);
+      const submissionKey = { expenseGroupId, id: submissionId.toLowerCase() };
+      const payloadHash = createHash("sha256")
+        .update(JSON.stringify([categoryId, values.title, values.amountCentavos, values.date]))
+        .digest("hex");
 
       try {
-        return await db.expense.create({
-          data: {
-            ...values,
-            // Both category membership and the session's ownership are checked.
-            category: {
-              connect: {
-                id_expenseGroupId: { id: categoryId, expenseGroupId },
-                expenseGroup: { userId },
-              },
+        return await db.$transaction(async (tx) => {
+          // Claim the submission before inserting the expense. A failed write releases the claim.
+          await tx.expenseSubmission.create({
+            data: {
+              id: submissionKey.id,
+              payloadHash,
+              expenseGroup: { connect: { id: expenseGroupId, userId } },
             },
-          },
+          });
+
+          return tx.expense.create({
+            data: {
+              ...values,
+              category: {
+                connect: {
+                  id_expenseGroupId: { id: categoryId, expenseGroupId },
+                  expenseGroup: { userId },
+                },
+              },
+              submission: { connect: { expenseGroupId_id: submissionKey } },
+            },
+          });
         });
       } catch (error) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === "P2025"
-        ) {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+          throw error;
+        }
+
+        if (error.code === "P2025") {
           throw new TypeError("Category not found in this expense group");
         }
 
-        throw error;
+        if (error.code !== "P2002") {
+          throw error;
+        }
+
+        const submission = await db.expenseSubmission.findUnique({
+          where: { expenseGroupId_id: submissionKey, expenseGroup: { userId } },
+          include: { expense: true },
+        });
+        if (!submission) {
+          throw error;
+        }
+
+        if (submission.payloadHash !== payloadHash) {
+          throw new TypeError(
+            "This draft was already saved with different details. Close it and review the saved expense."
+          );
+        }
+
+        if (!submission.expense) {
+          throw new TypeError("This expense was already saved and has since been deleted.");
+        }
+
+        return submission.expense;
       }
     },
 
