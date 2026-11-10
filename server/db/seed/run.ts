@@ -1,35 +1,41 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { PrismaClient } from "../../../generated/prisma/client";
+import { PrismaClient, type Prisma } from "../../../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { assertDevelopmentDatabaseResetAllowed } from "./guard";
 
 // Refuse before constructing a client or executing any database operation.
 assertDevelopmentDatabaseResetAllowed(process.env);
 
+const ownerEmail = process.env.REDFUNDS_SEED_USER_EMAIL?.trim().toLowerCase();
+if (!ownerEmail) {
+  throw new Error("Set REDFUNDS_SEED_USER_EMAIL to an existing development account before seeding.");
+}
+
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
+async function seed(db: Prisma.TransactionClient, userId: string) {
   console.log("Resetting development database and creating demo data...");
 
   // Clean existing data and reset auto-increment sequences
-  await prisma.$executeRawUnsafe(
-    `TRUNCATE TABLE "Expense", "Category", "Budget", "ExpenseGroupBank", "Bank", "Spending" RESTART IDENTITY CASCADE`,
-  );
+  await db.$executeRaw`
+    TRUNCATE TABLE "Expense", "Category", "Budget", "ExpenseGroupBank", "Bank", "Spending"
+    RESTART IDENTITY CASCADE
+  `;
 
   // Create expense groups
-  const jcPersonal = await prisma.expenseGroup.create({
-    data: { name: "JC Personal" },
+  const jcPersonal = await db.expenseGroup.create({
+    data: { name: "JC Personal", userId },
   });
 
-  const redFamily = await prisma.expenseGroup.create({
-    data: { name: "Red Family" },
+  const redFamily = await db.expenseGroup.create({
+    data: { name: "Red Family", userId },
   });
 
   // Create categories for JC Personal
-  const food = await prisma.category.create({
+  const food = await db.category.create({
     data: {
       name: "Food",
       icon: "🍔",
@@ -38,7 +44,7 @@ async function main() {
     },
   });
 
-  const transport = await prisma.category.create({
+  const transport = await db.category.create({
     data: {
       name: "Transport",
       icon: "🚗",
@@ -47,7 +53,7 @@ async function main() {
     },
   });
 
-  const bills = await prisma.category.create({
+  const bills = await db.category.create({
     data: {
       name: "Bills",
       icon: "💡",
@@ -57,7 +63,7 @@ async function main() {
   });
 
   // Create categories for Red Family
-  const groceries = await prisma.category.create({
+  const groceries = await db.category.create({
     data: {
       name: "Groceries",
       icon: "🛒",
@@ -66,7 +72,7 @@ async function main() {
     },
   });
 
-  const utilities = await prisma.category.create({
+  const utilities = await db.category.create({
     data: {
       name: "Utilities",
       icon: "🔌",
@@ -76,7 +82,7 @@ async function main() {
   });
 
   // Create expenses for JC Personal - Food
-  await prisma.expense.createMany({
+  await db.expense.createMany({
     data: [
       {
         title: "Jollibee",
@@ -125,7 +131,7 @@ async function main() {
   });
 
   // Create expenses for JC Personal - Transport
-  await prisma.expense.createMany({
+  await db.expense.createMany({
     data: [
       {
         title: "Grab",
@@ -157,7 +163,7 @@ async function main() {
   });
 
   // Create expenses for JC Personal - Bills
-  await prisma.expense.createMany({
+  await db.expense.createMany({
     data: [
       {
         title: "Meralco",
@@ -190,7 +196,7 @@ async function main() {
   });
 
   // Create expenses for Red Family
-  await prisma.expense.createMany({
+  await db.expense.createMany({
     data: [
       {
         title: "SM Supermarket",
@@ -229,7 +235,25 @@ async function main() {
       },
     ],
   });
+}
 
+async function main() {
+  await prisma.$transaction(
+    async (db) => {
+      const owner = await db.user.findUnique({
+        where: { email: ownerEmail },
+        select: { id: true },
+      });
+      if (!owner) {
+        throw new Error(
+          "No development account matches REDFUNDS_SEED_USER_EMAIL. Sign up in this database before seeding.",
+        );
+      }
+
+      await seed(db, owner.id);
+    },
+    { timeout: 30_000 },
+  );
   console.log("✅ Seeding complete!");
 }
 

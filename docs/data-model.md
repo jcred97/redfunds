@@ -49,7 +49,7 @@ Migration `20261022150000_core_expense_group_model` runs in one transaction. It 
 
 Back up the existing application rows and migration history before applying it. Afterward, compare all original columns per ID, verify the group backfill and null bank assignments, and reconcile counts/totals. Apply migrations before running the new application build, which reads the new optional bank relation. The previous deployed read/create-group workflows remain compatible with the retained physical tables. Older external expense writers would need to supply the new required group ID and are outside this app's current implemented workflows.
 
-The development seed still requires explicit opt-in. It resets all six core tables, preserves the legacy bank-text fixtures, and does not invent budgets or bank assignments.
+The development seed requires explicit reset opt-in and an existing account selected through `REDFUNDS_SEED_USER_EMAIL`. It verifies the account before resetting all six core tables and assigns both demo groups to that account. The fixtures retain legacy bank text and leave budgets and bank assignments empty.
 
 ## Deferred
 

@@ -54,7 +54,7 @@ Check the target database before applying migrations. For existing databases, in
 
 **Only seed a disposable development database.** The script resets all expenses, categories, budgets, bank assignments, banks, and expense groups before inserting demonstration records. It refuses execution unless both `NODE_ENV=development` and `REDFUNDS_ALLOW_DATABASE_RESET=true` are explicitly set, and always refuses a Vercel production environment. The guard runs before constructing a database client. Seeding is not required for startup, and these flags do not verify which database the URL targets. Do not save the reset opt-in in `.env`.
 
-To intentionally replace demo data, first point `DATABASE_URL` at a disposable development database, apply migrations, then set those two environment variables for that invocation of `npm run seed` only. Remove the opt-in afterward. Never use this to repair a database connection.
+To replace demo data, point `DATABASE_URL` at a disposable development database, apply migrations, and sign up for an account in the local app. For the `npm run seed` invocation, set `NODE_ENV=development`, `REDFUNDS_ALLOW_DATABASE_RESET=true`, and `REDFUNDS_SEED_USER_EMAIL` to that account's email. The seed checks the account before resetting data and assigns both demo groups to it. Sign in with that account to see the groups. Remove the reset opt-in afterward. Never use seeding to repair a database connection.
 
 Available scripts:
 
@@ -64,7 +64,7 @@ Available scripts:
 | `npm run lint` | Run ESLint |
 | `npm run build` | Generate Prisma client and build Next.js |
 | `npm start` | Serve an existing production build |
-| `npm run seed` | Guarded development reset; refuses by default |
+| `npm run seed` | Guarded development reset with demo groups assigned to an existing account |
 | `npm test` | Run tests in `tests/`: money, authentication, ownership, seed-guard, and isolated PostgreSQL migrations; no live database required |
 
 ### Exact money and migration
