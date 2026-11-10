@@ -13,7 +13,7 @@ import {
 import { createPortal } from "react-dom";
 
 type FormDialogProps = {
-  triggerLabel: string;
+  triggerLabel: ReactNode;
   triggerAriaLabel?: string;
   triggerFocusKey?: string;
   triggerVariant?: "primary" | "secondary" | "danger";

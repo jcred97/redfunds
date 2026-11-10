@@ -8,14 +8,13 @@ import ExpenseGroupsSkeleton from "./_components/ExpenseGroupsSkeleton";
 export default function ExpenseGroups() {
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10">
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center gap-4">
-          <h1 className="text-2xl font-semibold">Your Expense Groups</h1>
+      <div className="mb-8 flex items-center gap-2 sm:gap-4">
+        <h1 className="min-w-0 wrap-break-word text-lg font-semibold sm:text-2xl">
+          Your Expense Groups
+        </h1>
+        <div className="ml-auto shrink-0 whitespace-nowrap max-sm:[&>button]:px-2.5 max-sm:[&>button]:text-xs">
           <NewExpenseGroupButton />
         </div>
-        <p className="mt-1 text-gray-400">
-          Select an expense group to view its categories and expenses.
-        </p>
       </div>
 
       <Suspense fallback={<ExpenseGroupsSkeleton />}>
@@ -37,7 +36,7 @@ async function ExpenseGroupCards() {
           </div>
           <p className="text-gray-300 font-medium">No expense groups yet</p>
           <p className="text-gray-500 text-sm mt-1">
-            Click &quot;+ New Expense Group&quot; to create your first expense group.
+            Create your first expense group to start tracking expenses.
           </p>
         </div>
       ) : (

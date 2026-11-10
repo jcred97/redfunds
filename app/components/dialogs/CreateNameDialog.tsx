@@ -1,10 +1,10 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import FormDialog from "@/app/components/dialogs/FormDialog";
 
 type CreateNameDialogProps = {
-  triggerLabel: string;
+  triggerLabel: ReactNode;
   title: string;
   description: string;
   placeholder: string;
