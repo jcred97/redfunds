@@ -6,7 +6,7 @@ import { createExpenseGroup } from "@/app/(dashboard)/_lib/expense-groups/mutati
 export default function NewExpenseGroupButton() {
   return (
     <CreateNameDialog
-      triggerLabel="+ New"
+      triggerLabel="+ New Expense Group"
       title="New Expense Group"
       description="An expense group is a workspace for your categories and expenses."
       placeholder="e.g. JC Personal"

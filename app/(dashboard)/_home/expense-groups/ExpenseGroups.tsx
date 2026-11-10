@@ -2,40 +2,26 @@ import { Suspense } from "react";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
 import { getExpenseGroups } from "@/app/(dashboard)/_lib/expense-groups/queries";
 import NewExpenseGroupButton from "./_components/NewExpenseGroupButton";
-import AccountMenu from "@/app/components/auth/AccountMenu";
 import ExpenseGroupLink from "./_components/ExpenseGroupLink";
 import ExpenseGroupsSkeleton from "./_components/ExpenseGroupsSkeleton";
 
-export default function ExpenseGroups({ name, email }: { name: string; email: string }) {
+export default function ExpenseGroups() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight">
-            Red<span className="text-red-500">Funds</span>
-          </h1>
-          <div className="flex items-center gap-3">
-            <NewExpenseGroupButton />
-            <AccountMenu name={name} email={email} />
-          </div>
+    <main className="mx-auto w-full max-w-6xl px-6 py-10">
+      <div className="mb-8">
+        <div className="flex flex-wrap items-center gap-4">
+          <h1 className="text-2xl font-semibold">Your Expense Groups</h1>
+          <NewExpenseGroupButton />
         </div>
-      </header>
+        <p className="mt-1 text-gray-400">
+          Select an expense group to view its categories and expenses.
+        </p>
+      </div>
 
-      {/* Main */}
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold">Your Expense Groups</h2>
-          <p className="text-gray-400 mt-1">
-            Select an expense group to view its categories and expenses.
-          </p>
-        </div>
-
-        <Suspense fallback={<ExpenseGroupsSkeleton />}>
-          <ExpenseGroupCards />
-        </Suspense>
-      </main>
-    </div>
+      <Suspense fallback={<ExpenseGroupsSkeleton />}>
+        <ExpenseGroupCards />
+      </Suspense>
+    </main>
   );
 }
 
@@ -51,7 +37,7 @@ async function ExpenseGroupCards() {
           </div>
           <p className="text-gray-300 font-medium">No expense groups yet</p>
           <p className="text-gray-500 text-sm mt-1">
-            Click &quot;+ New&quot; to create your first expense group.
+            Click &quot;+ New Expense Group&quot; to create your first expense group.
           </p>
         </div>
       ) : (

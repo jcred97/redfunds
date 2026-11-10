@@ -111,6 +111,7 @@ Authenticated pages render per request because their session check uses request 
 | Location | Responsibility |
 | --- | --- |
 | `app/` | Route entry points, root layout, and global styles |
+| `app/(dashboard)/layout.tsx` | Shared navigation for signed-in pages |
 | `app/(dashboard)/_home/expense-groups/` | Home expense-group section and its private `_components/` |
 | `app/(dashboard)/_lib/` | Database access, queries, and server actions grouped by category, expense group, and expense |
 | `app/(dashboard)/spending/[id]/` | Expense-group detail and history route with category and expense component folders |
@@ -129,7 +130,7 @@ Authenticated pages render per request because their session check uses request 
 | `docs/roadmap.md` | Planned milestones and completion criteria |
 | `docs/data-model.md` | Core model, integrity rules, and preservation strategy |
 
-Application code uses grouped feature routes, private `_home` sections, and `_components` and `_lib` folders. `app/page.tsx` composes the home section. Group related files by feature and use short role names such as `access.ts` and `mutations.ts` for implementation modules. Use descriptive component names that match their filenames. Keep feature UI beside its route and group reusable UI by purpose under `app/components/`.
+Application code uses grouped feature routes, private `_home` sections, and `_components` and `_lib` folders. `app/(dashboard)/page.tsx` composes the home section. Group related files by feature and use short role names such as `access.ts` and `mutations.ts` for implementation modules. Use descriptive component names that match their filenames. Keep feature UI beside its route and group reusable UI by purpose under `app/components/`.
 
 The Prisma schema, migration history, and runtime client live in `server/db/`. Prisma generates its client into the ignored root `generated/` folder. The `@/*` alias resolves from the repository root. Route groups and private folders keep URLs stable as internal files move.
 

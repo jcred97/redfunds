@@ -1,6 +1,7 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
-import { requireUser } from "@/app/lib/auth/session";
 import AccountMenu from "@/app/components/auth/AccountMenu";
+import { requireUser } from "@/app/lib/auth/session";
 
 export default async function DashboardLayout({
   children,
@@ -11,17 +12,20 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <div className="border-b border-gray-800 bg-gray-950 px-6 py-3 text-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <p
-            className="min-w-0 truncate text-sm text-gray-400"
-            title={user.email}
+      <header className="border-b border-gray-800 bg-gray-950 px-6 py-4 text-white">
+        <nav
+          aria-label="Main navigation"
+          className="mx-auto flex max-w-6xl items-center justify-between gap-4"
+        >
+          <Link
+            href="/"
+            className="rounded-sm text-xl font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400"
           >
-            {user.name || user.email}
-          </p>
+            Red<span className="text-red-500">Funds</span>
+          </Link>
           <AccountMenu name={user.name} email={user.email} />
-        </div>
-      </div>
+        </nav>
+      </header>
       {children}
     </>
   );
