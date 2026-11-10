@@ -10,6 +10,10 @@ export async function getExpenseGroups() {
   return access.list();
 }
 
+export async function getExpenseGroupOptions() {
+  return access.listForSwitcher();
+}
+
 export async function getExpenseGroupById(id: number) {
   return access.getById(id);
 }

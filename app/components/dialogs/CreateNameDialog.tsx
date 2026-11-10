@@ -5,6 +5,7 @@ import FormDialog from "@/app/components/dialogs/FormDialog";
 
 type CreateNameDialogProps = {
   triggerLabel: ReactNode;
+  triggerVariant?: "primary" | "menu";
   title: string;
   description: string;
   placeholder: string;

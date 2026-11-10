@@ -112,6 +112,7 @@ Authenticated pages render per request because their session check uses request 
 | --- | --- |
 | `app/` | Route entry points, root layout, and global styles |
 | `app/(dashboard)/layout.tsx` | Shared navigation for signed-in pages |
+| `app/(dashboard)/_components/expense-groups/` | Expense-group creation shared by the home list and group switcher |
 | `app/(dashboard)/_home/expense-groups/` | Home expense-group section and its private `_components/` |
 | `app/(dashboard)/_lib/` | Database access, queries, and server actions grouped by category, expense group, and expense |
 | `app/(dashboard)/spending/[id]/` | Expense-group detail and history route with category and expense component folders |

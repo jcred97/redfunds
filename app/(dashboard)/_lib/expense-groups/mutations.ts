@@ -24,6 +24,7 @@ export async function createExpenseGroup(
   }
 
   revalidatePath("/");
+  revalidatePath("/spending/[id]", "page");
 
   return { success: true };
 }
@@ -32,4 +33,5 @@ export async function deleteExpenseGroup(id: number) {
   await access.delete(id);
 
   revalidatePath("/");
+  revalidatePath("/spending/[id]", "page");
 }

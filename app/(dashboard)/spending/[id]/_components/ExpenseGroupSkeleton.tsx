@@ -1,30 +1,26 @@
-import Link from "next/link";
 import Skeleton from "@/app/components/feedback/Skeleton";
 
 export default function ExpenseGroupSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="mx-auto w-full max-w-6xl flex-1 px-6 text-white">
       <p role="status" className="sr-only">
         Loading expense group...
       </p>
 
-      <header className="border-b border-gray-800 px-6 py-4">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              href="/"
-              className="text-sm text-gray-400 transition-colors hover:text-white"
-            >
-              ← Back
-            </Link>
-            <span aria-hidden="true" className="text-gray-700">|</span>
-            <Skeleton className="h-7 w-36 sm:w-48" />
+      <header className="pt-6" aria-hidden="true">
+        <Skeleton className="h-8 w-44 sm:h-9 sm:w-52" />
+        <div className="mt-4 flex items-center justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
+          <div className="flex self-end text-sm font-medium text-gray-400">
+            <span className="px-2.5 py-3 sm:px-4">Expenses</span>
+            <span className="px-2.5 py-3 sm:px-4">Categories</span>
           </div>
-          <Skeleton className="h-10 w-36 rounded-lg" />
+          <div className="pb-2">
+            <Skeleton className="h-8 w-24 rounded-lg sm:h-9 sm:w-32" />
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+      <main className="py-6 sm:py-8">
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {["Total Spent", "Expenses", "Categories"].map((label) => (
             <div
@@ -36,30 +32,6 @@ export default function ExpenseGroupSkeleton() {
             </div>
           ))}
         </div>
-
-        <section className="mb-8" aria-labelledby="loading-categories-title">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 id="loading-categories-title" className="text-lg font-semibold">
-              Categories
-            </h2>
-            <Skeleton className="h-10 w-36 rounded-lg" />
-          </div>
-          <div aria-hidden="true" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((index) => (
-              <div
-                key={index}
-                className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-3"
-              >
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="mt-1 h-5 w-20" />
-                <div className="mt-3 flex gap-2">
-                  <Skeleton className="h-9 w-20 rounded-lg" />
-                  <Skeleton className="h-9 w-16 rounded-lg" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
 
         <section aria-labelledby="loading-expenses-title">
           <h2 id="loading-expenses-title" className="mb-4 text-lg font-semibold">

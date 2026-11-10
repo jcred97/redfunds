@@ -16,7 +16,7 @@ type FormDialogProps = {
   triggerLabel: ReactNode;
   triggerAriaLabel?: string;
   triggerFocusKey?: string;
-  triggerVariant?: "primary" | "secondary" | "danger";
+  triggerVariant?: "primary" | "secondary" | "danger" | "menu";
   destructive?: boolean;
   returnFocusId?: string;
   title: string;
@@ -177,6 +177,11 @@ export default function FormDialog({
   if (triggerVariant === "danger") {
     triggerClass =
       "cursor-pointer rounded-lg border border-red-500/30 px-3 py-2 text-sm text-red-400 transition-colors hover:border-red-400 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50";
+  }
+
+  if (triggerVariant === "menu") {
+    triggerClass =
+      "flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-600";
   }
 
   return (

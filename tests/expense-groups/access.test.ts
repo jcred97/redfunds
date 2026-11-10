@@ -86,6 +86,11 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       assert.equal((await bob.list())[0].categories[0]._count.expenses, 1);
     });
 
+    await t.test("the group switcher only lists the signed-in user's group IDs and names", async () => {
+      assert.deepEqual(await alice.listForSwitcher(), [{ id: a.id, name: a.name }]);
+      assert.deepEqual(await bob.listForSwitcher(), [{ id: b.id, name: b.name }]);
+    });
+
     await t.test("guessed IDs cannot reveal other users or unclaimed groups and expenses", async () => {
       for (const [access, own, denied] of [
         [alice, a, [b, legacy]],
@@ -113,6 +118,7 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
 
       for (const invoke of [
         () => anonymous.list(),
+        () => anonymous.listForSwitcher(),
         () => anonymous.getById(a.id),
         () => anonymous.getExpensesById(a.id),
         () => anonymous.create("Injected"),

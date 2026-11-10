@@ -35,6 +35,15 @@ export function createExpenseGroupAccess(
       });
     },
 
+    async listForSwitcher() {
+      const userId = await requireUserId();
+      return db.expenseGroup.findMany({
+        where: { userId },
+        select: { id: true, name: true },
+        orderBy: { createdAt: "desc" },
+      });
+    },
+
     async getById(id: number) {
       const userId = await requireUserId();
 

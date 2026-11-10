@@ -12,19 +12,25 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <header className="border-b border-gray-800 bg-gray-950 px-6 py-4 text-white">
-        <nav
-          aria-label="Main navigation"
-          className="mx-auto flex max-w-6xl items-center justify-between gap-4"
-        >
+      <header className="border-b border-gray-800 bg-gray-950 text-white">
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-3 sm:gap-8">
           <Link
             href="/"
-            className="rounded-sm text-xl font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400"
+            className="shrink-0 rounded-sm text-lg font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 sm:text-xl"
           >
             Red<span className="text-red-500">Funds</span>
           </Link>
+          <nav aria-label="Main navigation" className="mr-auto">
+            <Link
+              href="/"
+              aria-current="location"
+              className="inline-block rounded-sm py-2 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:text-red-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400"
+            >
+              Expense Group
+            </Link>
+          </nav>
           <AccountMenu name={user.name} email={user.email} />
-        </nav>
+        </div>
       </header>
       {children}
     </>

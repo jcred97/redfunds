@@ -1,142 +1,119 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
-import CategoryActions from "./_components/categories/CategoryActions";
+import ExpenseCategories from "./_components/categories/ExpenseCategories";
+import ExpenseGroupSwitcher from "./_components/ExpenseGroupSwitcher";
 import ExpenseHistory from "./_components/expenses/ExpenseHistory";
 import NewCategoryButton from "./_components/categories/NewCategoryButton";
 import NewExpenseButton from "./_components/expenses/NewExpenseButton";
 import {
   getExpenseGroupById,
+  getExpenseGroupOptions,
   getExpensesByExpenseGroupId,
 } from "@/app/(dashboard)/_lib/expense-groups/queries";
 
 export default async function ExpenseGroupPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string | string[] }>;
 }) {
-  const { id: rawId } = await params;
+  const [{ id: rawId }, { tab }] = await Promise.all([params, searchParams]);
   const id = Number(rawId);
+  const showCategories = tab === "categories";
 
-  const [expenseGroup, expenses] = await Promise.all([
+  const [expenseGroup, groups, expenses] = await Promise.all([
     getExpenseGroupById(id),
-    getExpensesByExpenseGroupId(id),
+    getExpenseGroupOptions(),
+    showCategories ? [] : getExpensesByExpenseGroupId(id),
   ]);
 
   if (!expenseGroup) {
     notFound();
   }
 
-  const totalCentavos = sumCentavos(
-    expenses.map((expense) => expense.amountCentavos)
-  );
+  const groupPath = `/spending/${expenseGroup.id}`;
+  const categoriesTab = "?tab=categories";
+  const categoryOptions = expenseGroup.categories.map(({ id, name }) => ({ id, name }));
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              href="/"
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              ← Back
-            </Link>
-            <span className="text-gray-700">|</span>
-            <h1 id="expense-group-title" tabIndex={-1} className="break-words text-xl font-bold">{expenseGroup.name}</h1>
+    <div className="mx-auto w-full max-w-6xl flex-1 px-6 text-white">
+      <header className="pt-6">
+        <ExpenseGroupSwitcher
+          key={expenseGroup.id}
+          currentGroup={{ id: expenseGroup.id, name: expenseGroup.name }}
+          groups={groups}
+          tabSuffix={showCategories ? categoriesTab : ""}
+        />
+        <div className="mt-4 flex items-center justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
+          <nav aria-label="Expense group views" className="flex shrink-0 self-end">
+            {[
+              { label: "Expenses", href: groupPath, current: !showCategories },
+              { label: "Categories", href: groupPath + categoriesTab, current: showCategories },
+            ].map(({ label, href, current }) => (
+              <Link
+                key={label}
+                href={href}
+                aria-current={current ? "page" : undefined}
+                className={`-mb-px border-b-2 px-2.5 py-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-400 sm:px-4 ${current ? "border-red-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <div className="min-w-0 pb-2 [&_button]:ml-auto [&_button]:whitespace-nowrap [&_p]:text-right max-sm:[&_button]:px-2.5 max-sm:[&_button]:text-xs">
+            {showCategories ? (
+              <NewCategoryButton expenseGroupId={expenseGroup.id} />
+            ) : (
+              <NewExpenseButton expenseGroupId={expenseGroup.id} categories={categoryOptions} />
+            )}
           </div>
-          <NewExpenseButton
-            expenseGroupId={expenseGroup.id}
-            categories={expenseGroup.categories.map((category) => ({
-              id: category.id,
-              name: category.name,
-            }))}
-          />
         </div>
       </header>
 
-      {/* Main */}
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        {/* Summary */}
-        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-3">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Total Spent</p>
-            <p className="text-2xl font-bold text-white">
-              {formatPesoAmount(totalCentavos)}
-            </p>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Expenses</p>
-            <p className="text-2xl font-bold text-white">{expenses.length}</p>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Categories</p>
-            <p className="text-2xl font-bold text-white">
-              {expenseGroup.categories.length}
-            </p>
-          </div>
-        </div>
-
-        <section className="mb-8" aria-labelledby="categories-title">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 id="categories-title" className="text-lg font-semibold">
-              Categories
-            </h2>
-            <NewCategoryButton expenseGroupId={expenseGroup.id} />
-          </div>
-
-          {expenseGroup.categories.length === 0 ? (
-            <p className="rounded-xl border border-gray-800 bg-gray-900 p-5 text-sm text-gray-400">
-              No categories yet. Add one such as Food or Transport.
-            </p>
-          ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {expenseGroup.categories.map((category) => (
-                <li
-                  key={category.id}
-                  className="min-w-0 rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 text-sm"
-                >
-                  <h3 className="break-words font-medium">
-                    {category.icon && (
-                      <span aria-hidden="true">{category.icon} </span>
-                    )}
-                    {category.name}
-                  </h3>
-                  <p className="mt-1 text-gray-400">
-                    {category._count.expenses} {category._count.expenses === 1 ? "expense" : "expenses"}
-                  </p>
-                  <CategoryActions
-                    expenseGroupId={expenseGroup.id}
-                    category={{ id: category.id, name: category.name }}
-                    expenseCount={category._count.expenses}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Table */}
-        {expenses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="w-16 h-16 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">💸</span>
-            </div>
-            <p className="text-gray-300 font-medium">No expenses yet</p>
-            <p className="text-gray-500 text-sm mt-1">
-              Click &quot;+ New Expense&quot; to add your first expense.
-            </p>
-          </div>
+      <main className="py-6 sm:py-8">
+        {showCategories ? (
+          <ExpenseCategories expenseGroupId={expenseGroup.id} categories={expenseGroup.categories} />
         ) : (
-          <ExpenseHistory
-            expenseGroupId={expenseGroup.id}
-            categories={expenseGroup.categories.map((category) => ({
-              id: category.id,
-              name: category.name,
-            }))}
-            expenses={expenses}
-          />
+          <>
+            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                <p className="mb-1 text-sm text-gray-400">Total Spent</p>
+                <p className="text-2xl font-bold">
+                  {formatPesoAmount(sumCentavos(expenses.map((expense) => expense.amountCentavos)))}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                <p className="mb-1 text-sm text-gray-400">Expenses</p>
+                <p className="text-2xl font-bold">{expenses.length}</p>
+              </div>
+              <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                <p className="mb-1 text-sm text-gray-400">Categories</p>
+                <p className="text-2xl font-bold">{expenseGroup.categories.length}</p>
+              </div>
+            </div>
+
+            {expenses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 text-center">
+                <div className="mb-4 flex size-16 items-center justify-center rounded-full border border-gray-800 bg-gray-900">
+                  <span className="text-2xl">💸</span>
+                </div>
+                <p className="font-medium text-gray-300">No expenses yet</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {categoryOptions.length === 0
+                    ? "Add a category in the Categories tab to start recording expenses."
+                    : "Click + New Expense to add your first expense."}
+                </p>
+              </div>
+            ) : (
+              <ExpenseHistory
+                expenseGroupId={expenseGroup.id}
+                categories={categoryOptions}
+                expenses={expenses}
+              />
+            )}
+          </>
         )}
       </main>
     </div>
