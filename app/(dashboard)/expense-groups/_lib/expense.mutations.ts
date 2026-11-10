@@ -80,11 +80,17 @@ export async function updateExpense(
   const categoryId = typeof rawCategoryId === "string" ? Number(rawCategoryId) : NaN;
 
   try {
-    await access.update(expenseGroupId, expenseId, categoryId, {
-      title: formData.get("title"),
-      amount: formData.get("amount"),
-      date: formData.get("date"),
-    });
+    await access.update(
+      expenseGroupId,
+      expenseId,
+      categoryId,
+      {
+        title: formData.get("title"),
+        amount: formData.get("amount"),
+        date: formData.get("date"),
+      },
+      formData.get("expectedUpdatedAt"),
+    );
   } catch (error) {
     if (error instanceof TypeError) {
       return { error: error.message };

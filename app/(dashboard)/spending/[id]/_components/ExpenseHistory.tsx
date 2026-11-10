@@ -26,6 +26,7 @@ export default function ExpenseHistory({
             title: expense.title,
             amountCentavos: expense.amountCentavos,
             date: expense.date.toISOString(),
+            updatedAt: expense.updatedAt.toISOString(),
             categoryId: expense.categoryId,
           }}
         />

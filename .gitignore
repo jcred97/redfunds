@@ -44,5 +44,5 @@ next-env.d.ts
 # prisma generated client
 /generated
 
-# local agent instructions
-AGENTS.md
+# shared agent instructions
+!/AGENTS.md

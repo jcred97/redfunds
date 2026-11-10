@@ -337,6 +337,7 @@ test("expense writes validate money, dates, category membership, and current own
       const [aliceOtherExpense, bobExpense, unclaimedExpense] = otherExpenses;
       const notFound = /^TypeError: Expense or category not found in this expense group$/;
       const readAllExpenses = () => client.expense.findMany({ orderBy: { id: "asc" } });
+      let currentUpdatedAt = original.updatedAt.toISOString();
 
       await editing.test("owners can correct editable fields while preserving optional data and identity", async () => {
         const beforeCount = await client.expense.count();
@@ -345,6 +346,7 @@ test("expense writes validate money, dates, category membership, and current own
           original.id,
           replacementCategory.id,
           { title: "  Corrected title  ", amount: "0.30", date: "2024-02-29" },
+          currentUpdatedAt,
         );
 
         assert.equal(changed.id, original.id);
@@ -358,8 +360,53 @@ test("expense writes validate money, dates, category membership, and current own
         assert.equal(changed.legacyBankName, original.legacyBankName);
         assert.equal(changed.bankAssignmentId, original.bankAssignmentId);
         assert.deepEqual(changed.createdAt, original.createdAt);
-        assert.ok(changed.updatedAt.getTime() >= original.updatedAt.getTime());
+        assert.ok(changed.updatedAt.getTime() > original.updatedAt.getTime());
         assert.equal(await client.expense.count(), beforeCount);
+        currentUpdatedAt = changed.updatedAt.toISOString();
+      });
+
+      await editing.test("stale drafts cannot overwrite a newer save and a refreshed draft can edit it", async () => {
+        const expense = await client.expense.create({
+          data: {
+            title: "Lunch",
+            amountCentavos: 15075,
+            date: new Date("2026-10-27T00:00:00.000Z"),
+            expenseGroupId: aliceGroup.id,
+            categoryId: aliceCategory.id,
+            updatedAt: new Date(Date.now() + 60_000),
+          },
+        });
+        const originalVersion = expense.updatedAt.toISOString();
+        const newer = await alice.update(
+          aliceGroup.id,
+          expense.id,
+          aliceCategory.id,
+          { ...validInput, amount: "200.00" },
+          originalVersion,
+        );
+        assert.equal(newer.updatedAt.getTime(), expense.updatedAt.getTime() + 1);
+
+        await assert.rejects(
+          alice.update(
+            aliceGroup.id,
+            expense.id,
+            aliceCategory.id,
+            { ...validInput, title: "Lunch at work" },
+            originalVersion,
+          ),
+          /This expense changed since you opened it/,
+        );
+        assert.deepEqual(await client.expense.findUnique({ where: { id: expense.id } }), newer);
+
+        const refreshed = await alice.update(
+          aliceGroup.id,
+          expense.id,
+          aliceCategory.id,
+          { ...validInput, title: "Lunch at work", amount: "200.00" },
+          newer.updatedAt.toISOString(),
+        );
+        assert.equal(refreshed.title, "Lunch at work");
+        assert.equal(refreshed.amountCentavos, 20000);
       });
 
       await editing.test("foreign, unclaimed, missing, and wrong-group expenses cannot be edited or moved", async () => {
@@ -375,13 +422,15 @@ test("expense writes validate money, dates, category membership, and current own
           [aliceGroup.id, 2_147_483_647, aliceCategory.id],
           [2_147_483_647, original.id, aliceCategory.id],
         ]) {
+          const expectedUpdatedAt = before.find((expense) => expense.id === expenseId)
+            ?.updatedAt.toISOString() ?? currentUpdatedAt;
           await assert.rejects(
-            alice.update(groupId, expenseId, categoryId, validInput),
+            alice.update(groupId, expenseId, categoryId, validInput, expectedUpdatedAt),
             notFound,
           );
         }
         await assert.rejects(
-          bob.update(aliceGroup.id, original.id, aliceCategory.id, validInput),
+          bob.update(aliceGroup.id, original.id, aliceCategory.id, validInput, currentUpdatedAt),
           notFound,
         );
 
@@ -398,7 +447,7 @@ test("expense writes validate money, dates, category membership, and current own
           2_147_483_647,
         ]) {
           await assert.rejects(
-            alice.update(aliceGroup.id, original.id, categoryId, validInput),
+            alice.update(aliceGroup.id, original.id, categoryId, validInput, currentUpdatedAt),
             notFound,
           );
         }
@@ -409,7 +458,7 @@ test("expense writes validate money, dates, category membership, and current own
       await editing.test("anonymous edits still authenticate before validating submitted fields", async () => {
         const before = await readAllExpenses();
         await assert.rejects(
-          anonymous.update(aliceGroup.id, original.id, aliceCategory.id, validInput),
+          anonymous.update(aliceGroup.id, original.id, aliceCategory.id, validInput, currentUpdatedAt),
           /^Error: Sign in required$/,
         );
         await assert.rejects(
@@ -417,7 +466,7 @@ test("expense writes validate money, dates, category membership, and current own
             title: null,
             amount: null,
             date: null,
-          }),
+          }, null),
           /^Error: Sign in required$/,
         );
         assert.deepEqual(await readAllExpenses(), before);
@@ -431,7 +480,7 @@ test("expense writes validate money, dates, category membership, and current own
             alice.update(aliceGroup.id, original.id, aliceCategory.id, {
               ...validInput,
               title,
-            }),
+            }, currentUpdatedAt),
             TypeError,
           );
         }
@@ -440,7 +489,7 @@ test("expense writes validate money, dates, category membership, and current own
             alice.update(aliceGroup.id, original.id, aliceCategory.id, {
               ...validInput,
               amount,
-            }),
+            }, currentUpdatedAt),
             TypeError,
           );
         }
@@ -449,7 +498,7 @@ test("expense writes validate money, dates, category membership, and current own
             alice.update(aliceGroup.id, original.id, aliceCategory.id, {
               ...validInput,
               date,
-            }),
+            }, currentUpdatedAt),
             TypeError,
           );
         }
@@ -463,16 +512,23 @@ test("expense writes validate money, dates, category membership, and current own
           Number.MAX_SAFE_INTEGER,
         ]) {
           await assert.rejects(
-            alice.update(id, original.id, aliceCategory.id, validInput),
+            alice.update(id, original.id, aliceCategory.id, validInput, currentUpdatedAt),
             notFound,
           );
           await assert.rejects(
-            alice.update(aliceGroup.id, id, aliceCategory.id, validInput),
+            alice.update(aliceGroup.id, id, aliceCategory.id, validInput, currentUpdatedAt),
             notFound,
           );
           await assert.rejects(
-            alice.update(aliceGroup.id, original.id, id, validInput),
+            alice.update(aliceGroup.id, original.id, id, validInput, currentUpdatedAt),
             notFound,
+          );
+        }
+
+        for (const version of [null, "", "2026-10-27", "not a timestamp"]) {
+          await assert.rejects(
+            alice.update(aliceGroup.id, original.id, aliceCategory.id, validInput, version),
+            /Unable to identify this edit/,
           );
         }
 
@@ -482,12 +538,16 @@ test("expense writes validate money, dates, category membership, and current own
       await editing.test("each edit resolves its current owner rather than retaining an earlier session", async () => {
         let currentUser = "alice";
         const access = createExpenseAccess(client, async () => currentUser);
-        await access.update(aliceGroup.id, original.id, aliceCategory.id, validInput);
+        const saved = await access.update(
+          aliceGroup.id, original.id, aliceCategory.id, validInput, currentUpdatedAt,
+        );
 
         currentUser = "bob";
         const before = await readAllExpenses();
         await assert.rejects(
-          access.update(aliceGroup.id, original.id, aliceCategory.id, validInput),
+          access.update(
+            aliceGroup.id, original.id, aliceCategory.id, validInput, saved.updatedAt.toISOString(),
+          ),
           notFound,
         );
         assert.deepEqual(await readAllExpenses(), before);
@@ -496,6 +556,7 @@ test("expense writes validate money, dates, category membership, and current own
           bobExpense.id,
           bobCategory.id,
           validInput,
+          bobExpense.updatedAt.toISOString(),
         );
         assert.equal(changed.id, bobExpense.id);
       });

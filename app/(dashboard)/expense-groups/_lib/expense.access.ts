@@ -162,7 +162,8 @@ export function createExpenseAccess(
       expenseGroupId: number,
       expenseId: number,
       categoryId: number,
-      input: ExpenseInput
+      input: ExpenseInput,
+      expectedUpdatedAt: unknown
     ) {
       const userId = await requireUserId();
 
@@ -171,35 +172,60 @@ export function createExpenseAccess(
       }
 
       const values = parseExpenseInput(input);
+      const updatedAt = new Date(
+        typeof expectedUpdatedAt === "string" ? expectedUpdatedAt : NaN
+      );
+      // Advance the version even when two edits arrive in the same millisecond.
+      const nextUpdatedAt = new Date(Math.max(Date.now(), updatedAt.getTime() + 1));
+      if (
+        Number.isNaN(nextUpdatedAt.getTime()) ||
+        updatedAt.toISOString() !== expectedUpdatedAt
+      ) {
+        throw new TypeError("Unable to identify this edit. Refresh the page and try again.");
+      }
+
+      const ownedExpense = {
+        id: expenseId,
+        expenseGroupId,
+        category: { expenseGroup: { userId } },
+      };
 
       try {
-        return await db.expense.update({
-          // Check the original record's group and owner before changing its category.
-          where: {
-            id: expenseId,
-            expenseGroupId,
-            category: { expenseGroup: { userId } },
-          },
+        const [expense] = await db.expense.updateManyAndReturn({
+          where: { ...ownedExpense, updatedAt },
+          // The composite foreign key keeps the replacement category in this group.
           data: {
             ...values,
-            category: {
-              connect: {
-                id_expenseGroupId: { id: categoryId, expenseGroupId },
-                expenseGroup: { userId },
-              },
-            },
+            categoryId,
+            updatedAt: nextUpdatedAt,
           },
         });
+
+        if (expense) {
+          return expense;
+        }
       } catch (error) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === "P2025"
+          error.code === "P2003"
         ) {
           throw new TypeError("Expense or category not found in this expense group");
         }
 
         throw error;
       }
+
+      const existingExpense = await db.expense.findUnique({
+        where: ownedExpense,
+        select: { id: true },
+      });
+      if (existingExpense) {
+        throw new TypeError(
+          "This expense changed since you opened it. Copy any changes you want to keep, then refresh the page."
+        );
+      }
+
+      throw new TypeError("Expense or category not found in this expense group");
     },
   };
 }

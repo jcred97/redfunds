@@ -14,6 +14,7 @@ export type EditableExpense = {
   title: string;
   amountCentavos: number;
   date: string;
+  updatedAt: string;
   categoryId: number;
 };
 
@@ -30,6 +31,7 @@ export default function ExpenseFormDialog({
 }: ExpenseFormDialogProps) {
   const fieldId = useId();
   const submissionId = useRef("");
+  const expectedUpdatedAt = useRef("");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
@@ -38,6 +40,7 @@ export default function ExpenseFormDialog({
 
   function resetFields() {
     if (expense) {
+      expectedUpdatedAt.current = expense.updatedAt;
       setTitle(expense.title);
       setAmount(formatPesoInput(expense.amountCentavos));
       setDate(expense.date.slice(0, 10));
@@ -56,6 +59,7 @@ export default function ExpenseFormDialog({
 
     if (expense) {
       formData.set("expenseId", String(expense.id));
+      formData.set("expectedUpdatedAt", expectedUpdatedAt.current);
 
       return updateExpense(null, formData);
     }

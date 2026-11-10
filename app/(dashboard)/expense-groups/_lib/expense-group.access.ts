@@ -47,7 +47,6 @@ export function createExpenseGroupAccess(
         include: {
           categories: {
             include: {
-              expenses: true,
               _count: { select: { expenses: true } },
             },
           },
