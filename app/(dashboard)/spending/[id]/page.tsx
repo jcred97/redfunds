@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/money";
+import CategoryActions from "./_components/CategoryActions";
 import ExpenseHistory from "./_components/ExpenseHistory";
 import NewCategoryButton from "./_components/NewCategoryButton";
 import NewExpenseButton from "./_components/NewExpenseButton";
@@ -90,21 +91,26 @@ export default async function ExpenseGroupPage({
               No categories yet. Add one such as Food or Transport.
             </p>
           ) : (
-            <ul className="flex flex-wrap gap-3">
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {expenseGroup.categories.map((category) => (
                 <li
                   key={category.id}
-                  className="min-w-0 max-w-full rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 text-sm"
+                  className="min-w-0 rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 text-sm"
                 >
-                  <span className="break-words font-medium">
+                  <h3 className="break-words font-medium">
                     {category.icon && (
                       <span aria-hidden="true">{category.icon} </span>
                     )}
                     {category.name}
-                  </span>
-                  <span className="ml-2 text-gray-400">
-                    {category._count.expenses} expenses
-                  </span>
+                  </h3>
+                  <p className="mt-1 text-gray-400">
+                    {category._count.expenses} {category._count.expenses === 1 ? "expense" : "expenses"}
+                  </p>
+                  <CategoryActions
+                    expenseGroupId={expenseGroup.id}
+                    category={{ id: category.id, name: category.name }}
+                    expenseCount={category._count.expenses}
+                  />
                 </li>
               ))}
             </ul>

@@ -44,13 +44,18 @@ export default function ExpenseGroupSkeleton() {
             </h2>
             <Skeleton className="h-10 w-36 rounded-lg" />
           </div>
-          <div aria-hidden="true" className="flex flex-wrap gap-3">
+          <div aria-hidden="true" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2].map((index) => (
               <div
                 key={index}
                 className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-3"
               >
                 <Skeleton className="h-5 w-32" />
+                <Skeleton className="mt-1 h-5 w-20" />
+                <div className="mt-3 flex gap-2">
+                  <Skeleton className="h-9 w-20 rounded-lg" />
+                  <Skeleton className="h-9 w-16 rounded-lg" />
+                </div>
               </div>
             ))}
           </div>

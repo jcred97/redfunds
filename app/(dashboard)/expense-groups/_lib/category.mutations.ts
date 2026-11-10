@@ -13,11 +13,45 @@ export async function createCategory(
   previousState: CategoryActionState,
   formData: FormData
 ): Promise<CategoryActionState> {
-  const rawGroupId = formData.get("expenseGroupId");
-  const expenseGroupId = typeof rawGroupId === "string" ? Number(rawGroupId) : NaN;
+  const expenseGroupId = readId(formData, "expenseGroupId");
+  return saveCategoryChange(expenseGroupId, () =>
+    access.create(expenseGroupId, formData.get("name"))
+  );
+}
 
+export async function updateCategory(
+  previousState: CategoryActionState,
+  formData: FormData
+): Promise<CategoryActionState> {
+  const expenseGroupId = readId(formData, "expenseGroupId");
+  const categoryId = readId(formData, "categoryId");
+  return saveCategoryChange(expenseGroupId, () =>
+    access.update(expenseGroupId, categoryId, formData.get("name"))
+  );
+}
+
+export async function deleteCategory(
+  previousState: CategoryActionState,
+  formData: FormData
+): Promise<CategoryActionState> {
+  const expenseGroupId = readId(formData, "expenseGroupId");
+  const categoryId = readId(formData, "categoryId");
+  return saveCategoryChange(expenseGroupId, () =>
+    access.delete(expenseGroupId, categoryId)
+  );
+}
+
+function readId(formData: FormData, field: string): number {
+  const value = formData.get(field);
+  return typeof value === "string" ? Number(value) : NaN;
+}
+
+async function saveCategoryChange(
+  expenseGroupId: number,
+  change: () => Promise<unknown>
+): Promise<CategoryActionState> {
   try {
-    await access.create(expenseGroupId, formData.get("name"));
+    await change();
   } catch (error) {
     if (error instanceof TypeError) {
       return { error: error.message };

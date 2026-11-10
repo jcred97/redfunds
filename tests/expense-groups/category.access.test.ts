@@ -8,7 +8,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
 import { createCategoryAccess } from "../../app/(dashboard)/expense-groups/_lib/category.access";
 
-test("category creation uses the current owner and rejects unauthorized or invalid writes", async (t) => {
+test("category writes use the current owner and reject unauthorized or invalid writes", async (t) => {
   // Isolated PostgreSQL only; these tests never read DATABASE_URL.
   const db = await PGlite.create();
   const server = new PGLiteSocketServer({ db, host: "127.0.0.1", port: 0 });
@@ -159,6 +159,78 @@ test("category creation uses the current owner and rejects unauthorized or inval
 
       assert.equal(groceries.expenseGroupId, bobGroup.id);
       assert.equal(await client.category.count(), 5);
+    });
+
+    await t.test("rename and delete are scoped to the category, group and current owner", async () => {
+      const own = await alice.create(aliceGroup.id, "Own");
+      const foreign = await bob.create(bobGroup.id, "Foreign");
+      const unclaimed = await client.category.create({
+        data: { expenseGroupId: unclaimedGroup.id, name: "Unclaimed" },
+      });
+      const otherGroup = await client.expenseGroup.create({
+        data: { name: "Alice other group", userId: "alice" },
+      });
+      const before = await client.category.findMany({ orderBy: { id: "asc" } });
+      const notFound = /^TypeError: Category not found in this expense group$/;
+
+      for (const [groupId, categoryId] of [
+        [bobGroup.id, foreign.id],
+        [unclaimedGroup.id, unclaimed.id],
+        [otherGroup.id, own.id],
+        [aliceGroup.id, 2_147_483_647],
+        [aliceGroup.id, 2_147_483_648],
+        [NaN, own.id],
+      ]) {
+        await assert.rejects(alice.update(groupId, categoryId, "Changed"), notFound);
+        await assert.rejects(alice.delete(groupId, categoryId), notFound);
+      }
+      await assert.rejects(anonymous.update(NaN, NaN, ""), /Sign in required/);
+      await assert.rejects(anonymous.delete(NaN, NaN), /Sign in required/);
+      for (const name of [null, " ", "x".repeat(101)]) {
+        await assert.rejects(alice.update(aliceGroup.id, own.id, name), TypeError);
+      }
+      assert.deepEqual(await client.category.findMany({ orderBy: { id: "asc" } }), before);
+    });
+
+    await t.test("renaming retains linked expenses and only empty categories can be deleted", async () => {
+      const category = await client.category.create({
+        data: {
+          expenseGroupId: aliceGroup.id,
+          name: "Food",
+          icon: "🍎",
+          color: "#ff0000",
+        },
+      });
+      const expense = await client.expense.create({
+        data: {
+          expenseGroupId: aliceGroup.id,
+          categoryId: category.id,
+          title: "Lunch",
+          amountCentavos: 12345,
+          date: new Date("2026-10-27T00:00:00.000Z"),
+        },
+      });
+
+      await alice.update(aliceGroup.id, category.id, "  Meals  ");
+      assert.deepEqual(await client.category.findUnique({ where: { id: category.id } }), {
+        ...category,
+        name: "Meals",
+      });
+      await assert.rejects(
+        alice.delete(aliceGroup.id, category.id),
+        /^TypeError: Move or delete this category's expenses first\.$/,
+      );
+      assert.deepEqual(await client.expense.findUnique({ where: { id: expense.id } }), expense);
+
+      const replacement = await alice.create(aliceGroup.id, "Dining");
+      const movedExpense = await client.expense.update({
+        where: { id: expense.id },
+        data: { categoryId: replacement.id },
+      });
+      await alice.delete(aliceGroup.id, category.id);
+      assert.equal(await client.category.findUnique({ where: { id: category.id } }), null);
+      assert.deepEqual(await client.expense.findUnique({ where: { id: expense.id } }), movedExpense);
+      await assert.rejects(alice.delete(aliceGroup.id, category.id), /Category not found/);
     });
   } finally {
     await prisma?.$disconnect();
