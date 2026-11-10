@@ -2,11 +2,11 @@ import { Suspense } from "react";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
 import { getExpenseGroups } from "@/app/(dashboard)/_lib/expense-groups/queries";
 import NewExpenseGroupButton from "./_components/NewExpenseGroupButton";
-import SignOutButton from "@/app/components/auth/SignOutButton";
+import AccountMenu from "@/app/components/auth/AccountMenu";
 import ExpenseGroupLink from "./_components/ExpenseGroupLink";
 import ExpenseGroupsSkeleton from "./_components/ExpenseGroupsSkeleton";
 
-export default function ExpenseGroups() {
+export default function ExpenseGroups({ name, email }: { name: string; email: string }) {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
@@ -17,7 +17,7 @@ export default function ExpenseGroups() {
           </h1>
           <div className="flex items-center gap-3">
             <NewExpenseGroupButton />
-            <SignOutButton />
+            <AccountMenu name={name} email={email} />
           </div>
         </div>
       </header>
@@ -71,7 +71,6 @@ async function ExpenseGroupCards() {
               <ExpenseGroupLink
                 key={expenseGroup.id}
                 id={expenseGroup.id}
-                name={expenseGroup.name}
               >
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-500/50 hover:bg-gray-800/80 transition-all cursor-pointer group">
                   <div className="flex items-start justify-between mb-4">

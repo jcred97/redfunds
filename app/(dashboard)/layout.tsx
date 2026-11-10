@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { requireUser } from "@/app/lib/auth/session";
-import SignOutButton from "@/app/components/auth/SignOutButton";
+import AccountMenu from "@/app/components/auth/AccountMenu";
 
 export default async function DashboardLayout({
   children,
@@ -19,7 +19,7 @@ export default async function DashboardLayout({
           >
             {user.name || user.email}
           </p>
-          <SignOutButton />
+          <AccountMenu name={user.name} email={user.email} />
         </div>
       </div>
       {children}
