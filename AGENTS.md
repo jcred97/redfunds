@@ -19,5 +19,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Group related files by feature or purpose. Use short role names within each folder, such as `access.ts`, `mutations.ts`, and `queries.ts`. Give React component files the same descriptive name as their component.
 - Keep feature code beside its routes in private folders such as `_components` and `_lib`. Group reusable UI by purpose in `app/components/` and shared helpers by feature in `app/lib/`. Preserve Next.js entry points and public URLs when moving internal files.
-- Keep the Prisma client, schema, migrations, and seed tooling under `server/db/`. Preserve existing migration paths and history when reorganizing code.
+- Keep the Prisma client, schema, and migrations under `server/db/`. Preserve existing migration paths and history when reorganizing code.
 - Group tests under `tests/` by the feature or responsibility they cover. When moving files, update their imports, affected npm scripts, and the repository map in `README.md`.

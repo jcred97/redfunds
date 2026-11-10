@@ -42,7 +42,7 @@ Use a development PostgreSQL database and keep connection credentials out of Git
 
 1. Install dependencies with `npm ci`.
 2. Copy `.env.example` to an untracked `.env` file (the current workspace already has ignored local settings) and configure:
-   - `DATABASE_URL`: runtime Prisma/PostgreSQL connection, also used by the seed script.
+   - `DATABASE_URL`: runtime Prisma/PostgreSQL connection.
    - `DIRECT_URL`: connection used by the Prisma CLI through `prisma.config.ts`.
    - `BETTER_AUTH_SECRET`: generate at least 32 random bytes; the configuration requires a secret of at least 32 characters. Never reuse the example placeholder or commit the value.
    - `BETTER_AUTH_URL`: canonical origin, normally `http://localhost:3000` locally; HTTPS is required outside localhost. Do not include a path, query, or fragment.
@@ -52,9 +52,7 @@ Use a development PostgreSQL database and keep connection credentials out of Git
 
 Check the target database before applying migrations. For existing databases, inspect migration history and back up data first; the committed spending migration adds a required category relationship without a backfill.
 
-**Only seed a disposable development database.** The script resets all expenses, categories, budgets, bank assignments, banks, and expense groups before inserting demonstration records. It refuses execution unless both `NODE_ENV=development` and `REDFUNDS_ALLOW_DATABASE_RESET=true` are explicitly set, and always refuses a Vercel production environment. The guard runs before constructing a database client. Seeding is not required for startup, and these flags do not verify which database the URL targets. Do not save the reset opt-in in `.env`.
-
-To replace demo data, point `DATABASE_URL` at a disposable development database, apply migrations, and sign up for an account in the local app. For the `npm run seed` invocation, set `NODE_ENV=development`, `REDFUNDS_ALLOW_DATABASE_RESET=true`, and `REDFUNDS_SEED_USER_EMAIL` to that account's email. The seed checks the account before resetting data and assigns both demo groups to it. Sign in with that account to see the groups. Remove the reset opt-in afterward. Never use seeding to repair a database connection.
+To try the app with local data, sign up, create an expense group, add a category, and record an expense.
 
 Available scripts:
 
@@ -64,8 +62,7 @@ Available scripts:
 | `npm run lint` | Run ESLint |
 | `npm run build` | Generate Prisma client and build Next.js |
 | `npm start` | Serve an existing production build |
-| `npm run seed` | Guarded development reset with demo groups assigned to an existing account |
-| `npm test` | Run tests in `tests/`: money, authentication, ownership, seed-guard, and isolated PostgreSQL migrations; no live database required |
+| `npm test` | Run money, date, authentication, ownership, and isolated PostgreSQL migration tests without a live database |
 
 ### Exact money and migration
 
@@ -107,7 +104,7 @@ If a Supabase connection returns `(ENOTFOUND) tenant/user ... not found`, the sh
 
 Check the project's status in Supabase Dashboard, then copy the current connection strings from **Connect** into the untracked `.env` file. Use the Transaction pooler string for `DATABASE_URL` and a Session pooler string for `DIRECT_URL` when a direct connection is unavailable. Copy each host and username exactly, replacing only the password placeholder with the appropriately URL-encoded database password. Restart the app after changing `.env`.
 
-Authenticated pages render per request because their session check uses request headers. A successful build alone does not establish runtime database connectivity. Authentication configuration is required during the build. Validate connectivity before attempting migrations; the seed command is destructive and is not a connection repair step.
+Authenticated pages render per request because their session check uses request headers. A successful build alone does not establish runtime database connectivity. Authentication configuration is required during the build. Validate connectivity before attempting migrations.
 
 ## Repository map
 
@@ -126,16 +123,15 @@ Authenticated pages render per request because their session check uses request 
 | `server/db/client.ts` | Shared runtime database client |
 | `server/db/schema.prisma` | Data model |
 | `server/db/migrations/` | Database migration history |
-| `server/db/seed/` | Destructive demonstration-data seed and reset guard |
 | `tests/auth/` | Authentication and session tests |
 | `tests/categories/`, `tests/expense-groups/`, `tests/expenses/` | Feature access, expense date, and money tests |
-| `tests/db/` | Migration and seed tests grouped by responsibility |
+| `tests/db/migrations/` | Tests for PostgreSQL migrations and data preservation |
 | `docs/roadmap.md` | Planned milestones and completion criteria |
 | `docs/data-model.md` | Core model, integrity rules, and preservation strategy |
 
 Application code uses grouped feature routes, private `_home` sections, and `_components` and `_lib` folders. `app/page.tsx` composes the home section. Group related files by feature and use short role names such as `access.ts` and `mutations.ts` for implementation modules. Use descriptive component names that match their filenames. Keep feature UI beside its route and group reusable UI by purpose under `app/components/`.
 
-The Prisma schema, migration history, runtime client, and seed tooling live in `server/db/`. Prisma generates its client into the ignored root `generated/` folder. The `@/*` alias resolves from the repository root. Route groups and private folders keep URLs stable as internal files move.
+The Prisma schema, migration history, and runtime client live in `server/db/`. Prisma generates its client into the ignored root `generated/` folder. The `@/*` alias resolves from the repository root. Route groups and private folders keep URLs stable as internal files move.
 
 Keep automated test files under the root `tests/` directory, grouped by the area they cover, so application folders contain implementation code. Tests import the implementation from `app/` or `server/`. When adding a test file, include its path in the `npm test` script.
 

@@ -49,8 +49,6 @@ Migration `20261022150000_core_expense_group_model` runs in one transaction. It 
 
 Back up the existing application rows and migration history before applying it. Afterward, compare all original columns per ID, verify the group backfill and null bank assignments, and reconcile counts/totals. Apply migrations before running the new application build, which reads the new optional bank relation. The previous deployed read/create-group workflows remain compatible with the retained physical tables. Older external expense writers would need to supply the new required group ID and are outside this app's current implemented workflows.
 
-The development seed requires explicit reset opt-in and an existing account selected through `REDFUNDS_SEED_USER_EMAIL`. It verifies the account before resetting all six core tables and assigns both demo groups to that account. The fixtures retain legacy bank text and leave budgets and bank assignments empty.
-
 ## Deferred
 
 Email verification/delivery, password recovery, Google sign-in, and administrative assignment of preserved groups are deferred. Daily, yearly, and custom budget periods, exchange rates and original-currency snapshots, recurring templates/jobs, and automation settings are deferred. Expense dates are calendar days: new entries default to today's `Asia/Manila` day, use UTC midnight in the existing timestamp column, and display the UTC calendar day. No existing timestamp values are rewritten. Budget months remain PostgreSQL DATE values.

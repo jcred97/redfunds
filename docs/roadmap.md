@@ -13,7 +13,6 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [x] Adapt the core ExpenseGroup, Category, Expense, Budget, Bank, and BankAssignment schema while preserving legacy records. Use PaymentMethod and legacyBankName in application code with mappings to existing database identifiers. See [data model](data-model.md). Budget/bank management screens remain planned; exchange rates are deferred.
 
 - [x] Implement integer-centavo storage, exact parsing/formatting/totals, and a transactional migration with conversion and rollback tests. Apply the migration together with the matching application release; the shared database rollout is a separate deployment step.
-- [x] Guard destructive seeding: require explicit development mode and a reset opt-in; refuse Vercel production before database access. Only target disposable development databases.
 - [x] Define expense dates as calendar days: default to today in `Asia/Manila`, store the selected day at UTC midnight in the existing timestamp column, and display its UTC calendar day. Existing timestamps are preserved.
 - [x] Retain restricted deletion for expense groups/categories with child records and banks/assignments referenced by history. Document and test these rules in the core model.
 
