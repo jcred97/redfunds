@@ -31,12 +31,13 @@ export default async function ExpenseGroupPage({
     tab?: string | string[];
     page?: string | string[];
     month?: string | string[];
+    allMonths?: string | string[];
     category?: string | string[];
     paymentMethod?: string | string[];
     bank?: string | string[];
   }>;
 }) {
-  const [{ id: rawId }, { tab, page: rawPage, month: rawMonth, category, paymentMethod: rawMethod, bank: rawBank }] =
+  const [{ id: rawId }, { tab, page: rawPage, month: rawMonth, allMonths, category, paymentMethod: rawMethod, bank: rawBank }] =
     await Promise.all([params, searchParams]);
   const id = Number(rawId);
   const showCategories = tab === "categories";
@@ -45,7 +46,8 @@ export default async function ExpenseGroupPage({
   const requestedPage = typeof rawPage === "string" && /^[1-9]\d*$/.test(rawPage)
     ? Number(rawPage)
     : 1;
-  const month = rawMonth === undefined ? getManilaToday().slice(0, 7) : parseExpenseMonth(rawMonth);
+  const currentMonth = getManilaToday().slice(0, 7);
+  const month = parseExpenseMonth(rawMonth) ?? (allMonths === "1" ? undefined : currentMonth);
   const requestedCategory = typeof category === "string" && /^[1-9]\d{0,9}$/.test(category)
     ? Number(category)
     : undefined;
@@ -57,13 +59,19 @@ export default async function ExpenseGroupPage({
   const bankFilterValue = bank && typeof rawBank === "string" ? rawBank : undefined;
   const filters = { month, categoryId, paymentMethod, bank };
   const filterParams = new URLSearchParams();
-  if (month !== undefined) filterParams.set("month", month);
   if (categoryId !== undefined) filterParams.set("category", String(categoryId));
   if (paymentMethod !== undefined) filterParams.set("paymentMethod", paymentMethod);
   if (bankFilterValue !== undefined) filterParams.set("bank", bankFilterValue);
-  const hasFilters = filterParams.size > 0;
-  // Keep all-time pagination from falling back to the current month.
-  if (month === undefined) filterParams.set("month", "");
+  const hasOtherFilters = filterParams.size > 0;
+  const hasFilters = month !== undefined || hasOtherFilters;
+  const monthScopeParams = new URLSearchParams(filterParams);
+  if (month === undefined) {
+    filterParams.set("allMonths", "1");
+    monthScopeParams.set("month", currentMonth);
+  } else {
+    filterParams.set("month", month);
+    monthScopeParams.set("allMonths", "1");
+  }
   const filterQuery = filterParams.toString();
 
   const [expenseGroup, groups, expensePage, bankCatalog, bankOptions, historyBankOptions] = await Promise.all([
@@ -139,6 +147,8 @@ export default async function ExpenseGroupPage({
               categoryId={categoryId}
               paymentMethod={paymentMethod}
               bank={bankFilterValue}
+              monthScopeHref={`${groupPath}?${monthScopeParams}`}
+              canClearFilters={month !== currentMonth || hasOtherFilters}
             />
             <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
