@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { parseExpenseMonth } from "@/app/lib/expenses/date";
 import { formatPesoAmount } from "@/app/lib/expenses/money";
 import ExpenseCategories from "./_components/categories/ExpenseCategories";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
 import ExpenseGroupSwitcher from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSwitcher";
 import ExpenseHistory from "./_components/expenses/ExpenseHistory";
+import ExpenseHistoryFilters from "./_components/expenses/ExpenseHistoryFilters";
 import NewCategoryButton from "./_components/categories/NewCategoryButton";
 import NewExpenseButton from "./_components/expenses/NewExpenseButton";
 import {
@@ -18,19 +20,33 @@ export default async function ExpenseGroupPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string | string[]; page?: string | string[] }>;
+  searchParams: Promise<{
+    tab?: string | string[];
+    page?: string | string[];
+    month?: string | string[];
+    category?: string | string[];
+  }>;
 }) {
-  const [{ id: rawId }, { tab, page: rawPage }] = await Promise.all([params, searchParams]);
+  const [{ id: rawId }, { tab, page: rawPage, month: rawMonth, category }] =
+    await Promise.all([params, searchParams]);
   const id = Number(rawId);
   const showCategories = tab === "categories";
   const requestedPage = typeof rawPage === "string" && /^[1-9]\d*$/.test(rawPage)
     ? Number(rawPage)
     : 1;
+  const month = parseExpenseMonth(rawMonth);
+  const requestedCategory = typeof category === "string" && /^[1-9]\d{0,9}$/.test(category)
+    ? Number(category)
+    : undefined;
+  const categoryId = requestedCategory !== undefined && requestedCategory <= 2_147_483_647
+    ? requestedCategory
+    : undefined;
+  const hasFilters = month !== undefined || categoryId !== undefined;
 
   const [expenseGroup, groups, expensePage] = await Promise.all([
     getExpenseGroupById(id),
     getExpenseGroupOptions(),
-    showCategories ? null : getExpensePageByExpenseGroupId(id, requestedPage),
+    showCategories ? null : getExpensePageByExpenseGroupId(id, requestedPage, { month, categoryId }),
   ]);
 
   if (!expenseGroup || (!showCategories && !expensePage)) {
@@ -84,6 +100,13 @@ export default async function ExpenseGroupPage({
       <main className="py-6 sm:py-8">
         {expensePage ? (
           <>
+            <ExpenseHistoryFilters
+              key={`${expenseGroup.id}:${month ?? ""}:${categoryId ?? ""}:${expensePage.page}`}
+              groupPath={groupPath}
+              categories={categoryOptions}
+              month={month}
+              categoryId={categoryId}
+            />
             <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
                 <p className="mb-1 text-sm text-gray-400">Total Spent</p>
@@ -96,7 +119,7 @@ export default async function ExpenseGroupPage({
                 <p className="text-2xl font-bold">{expensePage.totalExpenses}</p>
               </div>
               <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-                <p className="mb-1 text-sm text-gray-400">Categories</p>
+                <p className="mb-1 text-sm text-gray-400">Group categories</p>
                 <p className="text-2xl font-bold">{expenseGroup.categories.length}</p>
               </div>
             </div>
@@ -106,12 +129,16 @@ export default async function ExpenseGroupPage({
                 <div className="mb-4 flex size-16 items-center justify-center rounded-full border border-gray-800 bg-gray-900">
                   <span className="text-2xl">💸</span>
                 </div>
-                <p className="font-medium text-gray-300">No expenses yet</p>
-                <p className="mt-1 text-sm text-gray-500">
-                  {categoryOptions.length === 0
-                    ? "Add a category in the Categories tab to start recording expenses."
-                    : "Click + New Expense to add your first expense."}
-                </p>
+                <h2 id="expense-history-title" tabIndex={-1} className="font-medium text-gray-300">
+                  {hasFilters ? "No expenses match these filters" : "No expenses yet"}
+                </h2>
+                {!hasFilters && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    {categoryOptions.length === 0
+                      ? "Add a category in the Categories tab to start recording expenses."
+                      : "Click + New Expense to add your first expense."}
+                  </p>
+                )}
               </div>
             ) : (
               <ExpenseHistory
@@ -120,6 +147,8 @@ export default async function ExpenseGroupPage({
                 expenses={expensePage.expenses}
                 page={expensePage.page}
                 totalPages={expensePage.totalPages}
+                month={month}
+                categoryId={categoryId}
               />
             )}
           </>

@@ -420,6 +420,81 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       await alice.delete(empty.id);
     });
 
+    await t.test("month and category filters apply to totals and every page", async () => {
+      const group = await alice.create("Filtered history");
+      const category = await client.category.create({
+        data: { expenseGroupId: group.id, name: "Food" },
+      });
+      const otherCategory = await client.category.create({
+        data: { expenseGroupId: group.id, name: "Transport" },
+      });
+      const foreignCategory = await client.category.findFirstOrThrow({
+        where: { expenseGroupId: b.id },
+      });
+      const matches = await client.expense.createManyAndReturn({
+        data: Array.from({ length: 26 }, (_, index) => ({
+          expenseGroupId: group.id,
+          categoryId: category.id,
+          title: `Food expense ${index + 1}`,
+          amountCentavos: 10,
+          date: new Date(index === 0 ? "2026-10-01T00:00:00Z" : "2026-10-31T23:59:59.999Z"),
+        })),
+        select: { id: true, date: true },
+      });
+      await client.expense.createMany({
+        data: [
+          { title: "September expense", categoryId: category.id, date: new Date("2026-09-30T23:59:59.999Z") },
+          { title: "November expense", categoryId: category.id, date: new Date("2026-11-01T00:00:00Z") },
+          { title: "October transit", categoryId: otherCategory.id, date: new Date("2026-10-01T00:00:00Z") },
+        ].map((expense) => ({ ...expense, expenseGroupId: group.id, amountCentavos: 25 })),
+      });
+
+      const filters = { month: "2026-10", categoryId: category.id };
+      const first = await alice.getExpensePageById(group.id, 1, filters);
+      const second = await alice.getExpensePageById(group.id, 2, filters);
+      assert.ok(first && second);
+      assert.equal(first.page, 1);
+      assert.equal(second.page, 2);
+      for (const page of [first, second]) {
+        assert.equal(page.totalExpenses, 26);
+        assert.equal(page.totalCentavos, BigInt(260));
+        assert.equal(page.totalPages, 2);
+      }
+      assert.equal(first.expenses.length, 25);
+      assert.equal(second.expenses.length, 1);
+      const expectedIds = matches
+        .sort((left, right) => right.date.getTime() - left.date.getTime() || right.id - left.id)
+        .map(({ id }) => id);
+      assert.deepEqual([...first.expenses, ...second.expenses].map(({ id }) => id), expectedIds);
+
+      const monthOnly = await alice.getExpensePageById(group.id, 1, { month: filters.month });
+      const categoryOnly = await alice.getExpensePageById(group.id, 1, { categoryId: filters.categoryId });
+      assert.equal(monthOnly?.totalCentavos, BigInt(285));
+      assert.equal(categoryOnly?.totalCentavos, BigInt(310));
+      assert.deepEqual(await alice.getExpensePageById(group.id, 2, { categoryId: foreignCategory.id }), {
+        expenses: [],
+        page: 1,
+        totalPages: 1,
+        totalExpenses: 0,
+        totalCentavos: BigInt(0),
+      });
+      assert.equal(await bob.getExpensePageById(group.id, 1, filters), null);
+
+      await client.expense.update({
+        where: { id: second.expenses[0].id },
+        data: { categoryId: otherCategory.id },
+      });
+      const clamped = await alice.getExpensePageById(group.id, 2, filters);
+      assert.equal(clamped?.page, 1);
+      assert.equal(clamped.totalExpenses, 25);
+      assert.equal(clamped.totalCentavos, BigInt(250));
+      assert.equal(clamped.expenses.length, 25);
+
+      await client.expense.deleteMany({ where: { expenseGroupId: group.id } });
+      await client.category.deleteMany({ where: { expenseGroupId: group.id } });
+      await alice.delete(group.id);
+    });
+
     await t.test("duplicating an empty group keeps the copy name within the limit", async () => {
       const prefix = "x".repeat(92);
       const source = await alice.create(prefix + "🚕123456");

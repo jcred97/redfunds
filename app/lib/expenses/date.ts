@@ -19,6 +19,12 @@ export function parseExpenseDate(value: unknown): Date {
   return date;
 }
 
+export function parseExpenseMonth(value: unknown): string | undefined {
+  if (typeof value === "string" && value.length === 7 && /^(?!0000)\d{4}-(0[1-9]|1[0-2])$/.test(value)) {
+    return value;
+  }
+}
+
 /** Use the Philippine calendar day for the new-expense form's default. */
 export function getManilaToday(now: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en", {

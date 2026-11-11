@@ -24,8 +24,22 @@ export default function ExpenseGroupSkeleton() {
       </header>
 
       <main className="py-6 sm:py-8">
+        <div
+          aria-hidden="true"
+          className="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-gray-800 bg-gray-900 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+        >
+          <div>
+            <Skeleton className="h-5 w-12" />
+            <Skeleton className="mt-1 h-10 w-full rounded-lg" />
+          </div>
+          <div>
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="mt-1 h-10 w-full rounded-lg" />
+          </div>
+          <Skeleton className="h-10 w-28 rounded-lg" />
+        </div>
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {["Total Spent", "Expenses", "Categories"].map((label) => (
+          {["Total Spent", "Expenses", "Group categories"].map((label) => (
             <div
               key={label}
               className="rounded-xl border border-gray-800 bg-gray-900 p-5"

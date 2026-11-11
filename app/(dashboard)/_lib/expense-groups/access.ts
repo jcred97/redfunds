@@ -1,4 +1,5 @@
 import { Prisma, type Expense, type PrismaClient } from "@/generated/prisma/client";
+import { parseExpenseMonth } from "@/app/lib/expenses/date";
 
 // Expense-group IDs use PostgreSQL's signed INTEGER column.
 const MAX_EXPENSE_GROUP_ID = 2_147_483_647;
@@ -27,6 +28,11 @@ type ExpenseGroupSummary = {
   categoryCount: bigint;
   expenseCount: bigint;
   totalCentavos: bigint;
+};
+
+export type ExpenseHistoryFilters = {
+  month?: string;
+  categoryId?: number;
 };
 
 export class ExpenseGroupAccessError extends Error {}
@@ -161,11 +167,25 @@ export function createExpenseGroupAccess(
       });
     },
 
-    async getExpensePageById(id: number, requestedPage: number) {
+    async getExpensePageById(
+      id: number,
+      requestedPage: number,
+      { month, categoryId }: ExpenseHistoryFilters = {}
+    ) {
       const userId = await requireUserId();
       if (!validId(id)) return null;
 
       const page = Number.isSafeInteger(requestedPage) && requestedPage >= 1 ? requestedPage : 1;
+      const selectedMonth = parseExpenseMonth(month);
+      const monthStart = selectedMonth ? `${selectedMonth}-01` : undefined;
+      // The date column stores UTC calendar dates. Use the same bounds for totals and rows.
+      const monthFilter = monthStart
+        ? Prisma.sql`AND date >= ${monthStart}::timestamp
+                     AND date < ${monthStart}::timestamp + INTERVAL '1 month'`
+        : Prisma.empty;
+      const categoryFilter = categoryId !== undefined && validId(categoryId)
+        ? Prisma.sql`AND "categoryId" = ${categoryId}`
+        : Prisma.empty;
       // Clamp the page and read its rows in the same database snapshot as the totals.
       const rows = await db.$queryRaw<ExpensePageRow[]>`
         WITH pagination AS (
@@ -178,6 +198,7 @@ export function createExpenseGroupAccess(
               GREATEST(1, (COUNT(*) + ${EXPENSES_PAGE_SIZE - 1}) / ${EXPENSES_PAGE_SIZE}) AS "totalPages"
             FROM "Expense"
             WHERE "expenseGroupId" = expense_group.id
+              ${monthFilter} ${categoryFilter}
           ) totals
           WHERE expense_group.id = ${id} AND expense_group."userId" = ${userId}
         )
@@ -190,6 +211,7 @@ export function createExpenseGroupAccess(
           SELECT id, title, "amountCentavos", date, "updatedAt", "categoryId", "transactionType", bank, "bankAssignmentId"
           FROM "Expense"
           WHERE "expenseGroupId" = pagination.id
+            ${monthFilter} ${categoryFilter}
           ORDER BY date DESC, id DESC
           LIMIT ${EXPENSES_PAGE_SIZE}
           OFFSET (pagination.page - 1) * ${EXPENSES_PAGE_SIZE}

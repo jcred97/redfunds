@@ -11,6 +11,8 @@ type ExpenseHistoryProps = {
   expenses: NonNullable<Awaited<ReturnType<typeof getExpensePageByExpenseGroupId>>>["expenses"];
   page: number;
   totalPages: number;
+  month?: string;
+  categoryId?: number;
 };
 
 const pageLinkClass = "rounded-lg border px-3 py-2 text-sm font-medium";
@@ -21,7 +23,18 @@ export default function ExpenseHistory({
   expenses,
   page,
   totalPages,
+  month,
+  categoryId,
 }: ExpenseHistoryProps) {
+  function expensePageHref(page: number) {
+    const query = new URLSearchParams();
+    if (month !== undefined) query.set("month", month);
+    if (categoryId !== undefined) query.set("category", String(categoryId));
+    if (page > 1) query.set("page", String(page));
+    const search = query.size > 0 ? `?${query}` : "";
+    return `/spending/${expenseGroupId}${search}#expense-history-title`;
+  }
+
   function expenseActions(expense: ExpenseHistoryProps["expenses"][number]) {
     return (
       <div className="flex flex-wrap justify-end gap-2">
@@ -116,7 +129,7 @@ export default function ExpenseHistory({
         <nav aria-label="Expense history pages" className="mt-4 flex items-center justify-end gap-3">
           {page > 1 ? (
             <Link
-              href={expensePageHref(expenseGroupId, page - 1)}
+              href={expensePageHref(page - 1)}
               prefetch={false}
               className={`${pageLinkClass} border-gray-700 text-gray-200 hover:bg-gray-800`}
             >
@@ -130,7 +143,7 @@ export default function ExpenseHistory({
           <span className="text-sm text-gray-400">Page {page} of {totalPages}</span>
           {page < totalPages ? (
             <Link
-              href={expensePageHref(expenseGroupId, page + 1)}
+              href={expensePageHref(page + 1)}
               prefetch={false}
               className={`${pageLinkClass} border-gray-700 text-gray-200 hover:bg-gray-800`}
             >
@@ -145,9 +158,4 @@ export default function ExpenseHistory({
       )}
     </section>
   );
-}
-
-function expensePageHref(groupId: number, page: number) {
-  const query = page > 1 ? `?page=${page}` : "";
-  return `/spending/${groupId}${query}#expense-history-title`;
 }
