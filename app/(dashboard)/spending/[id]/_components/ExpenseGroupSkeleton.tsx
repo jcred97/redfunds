@@ -8,7 +8,10 @@ export default function ExpenseGroupSkeleton() {
       </p>
 
       <header className="pt-6" aria-hidden="true">
-        <Skeleton className="h-8 w-44 sm:h-9 sm:w-52" />
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-8 w-44 sm:h-9 sm:w-52" />
+          <Skeleton className="h-6 w-20 shrink-0" />
+        </div>
         <div className="mt-4 flex items-center justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
           <div className="flex self-end text-sm font-medium text-gray-400">
             <span className="px-2.5 py-3 sm:px-4">Expenses</span>

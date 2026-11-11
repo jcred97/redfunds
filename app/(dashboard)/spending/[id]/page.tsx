@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
 import ExpenseCategories from "./_components/categories/ExpenseCategories";
+import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
 import ExpenseGroupSwitcher from "./_components/ExpenseGroupSwitcher";
 import ExpenseHistory from "./_components/expenses/ExpenseHistory";
 import NewCategoryButton from "./_components/categories/NewCategoryButton";
@@ -35,17 +36,22 @@ export default async function ExpenseGroupPage({
 
   const groupPath = `/spending/${expenseGroup.id}`;
   const categoriesTab = "?tab=categories";
+  const tabSuffix = showCategories ? categoriesTab : "";
+  const currentGroup = { id: expenseGroup.id, name: expenseGroup.name };
   const categoryOptions = expenseGroup.categories.map(({ id, name }) => ({ id, name }));
 
   return (
     <div className="mx-auto w-full max-w-6xl flex-1 px-6 text-white">
       <header className="pt-6">
-        <ExpenseGroupSwitcher
-          key={expenseGroup.id}
-          currentGroup={{ id: expenseGroup.id, name: expenseGroup.name }}
-          groups={groups}
-          tabSuffix={showCategories ? categoriesTab : ""}
-        />
+        <div className="flex items-center justify-between gap-4">
+          <ExpenseGroupSwitcher
+            key={expenseGroup.id}
+            currentGroup={currentGroup}
+            groups={groups}
+            tabSuffix={tabSuffix}
+          />
+          <ExpenseGroupSettings key={expenseGroup.id} group={currentGroup} tabSuffix={tabSuffix} />
+        </div>
         <div className="mt-4 flex items-center justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
           <nav aria-label="Expense group views" className="flex shrink-0 self-end">
             {[

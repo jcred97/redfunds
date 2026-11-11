@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
 import { getExpenseGroups } from "@/app/(dashboard)/_lib/expense-groups/queries";
+import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
 import NewExpenseGroupButton from "@/app/(dashboard)/_components/expense-groups/NewExpenseGroupButton";
 import ExpenseGroupLink from "./_components/ExpenseGroupLink";
 import ExpenseGroupsSkeleton from "./_components/ExpenseGroupsSkeleton";
@@ -9,7 +10,7 @@ export default function ExpenseGroups() {
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10">
       <div className="mb-8 flex items-center gap-2 sm:gap-4">
-        <h1 className="min-w-0 wrap-break-word text-lg font-semibold sm:text-2xl">
+        <h1 id="expense-groups-title" tabIndex={-1} className="min-w-0 wrap-break-word text-lg font-semibold sm:text-2xl">
           Your Expense Groups
         </h1>
         <div className="ml-auto shrink-0 whitespace-nowrap max-sm:[&>button]:px-2.5 max-sm:[&>button]:text-xs">
@@ -53,31 +54,31 @@ async function ExpenseGroupCards() {
             );
 
             return (
-              <ExpenseGroupLink
-                key={expenseGroup.id}
-                id={expenseGroup.id}
-              >
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-500/50 hover:bg-gray-800/80 transition-all cursor-pointer group">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="font-semibold text-white text-lg group-hover:text-red-400 transition-colors leading-tight">
+              <article key={expenseGroup.id} className="relative">
+                <ExpenseGroupLink id={expenseGroup.id}>
+                  <div className="group cursor-pointer rounded-xl border border-gray-800 bg-gray-900 p-6 transition-all hover:border-red-500/50 hover:bg-gray-800/80">
+                    <h2 className="mb-4 wrap-anywhere pr-10 text-lg leading-tight font-semibold text-white transition-colors group-hover:text-red-400">
                       {expenseGroup.name}
-                    </h3>
-                    <span className="text-red-500 text-xs font-medium bg-red-500/10 px-2 py-1 rounded-full shrink-0 ml-2">
-                      Active
-                    </span>
-                  </div>
+                    </h2>
 
-                  <p className="text-3xl font-bold text-white mb-4 tracking-tight">
-                    {formatPesoAmount(totalCentavos)}
-                  </p>
+                    <p className="mb-4 text-3xl font-bold tracking-tight text-white">
+                      {formatPesoAmount(totalCentavos)}
+                    </p>
 
-                  <div className="flex gap-3 text-sm text-gray-400">
-                    <span>{expenseGroup._count.categories} categories</span>
-                    <span>·</span>
-                    <span>{totalExpenses} expenses</span>
+                    <div className="flex gap-3 text-sm text-gray-400">
+                      <span>{expenseGroup._count.categories} categories</span>
+                      <span>·</span>
+                      <span>{totalExpenses} expenses</span>
+                    </div>
                   </div>
+                </ExpenseGroupLink>
+                <div className="absolute top-4 right-4">
+                  <ExpenseGroupSettings
+                    group={{ id: expenseGroup.id, name: expenseGroup.name }}
+                    onGroupList
+                  />
                 </div>
-              </ExpenseGroupLink>
+              </article>
             );
           })}
         </div>

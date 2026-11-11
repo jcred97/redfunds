@@ -45,7 +45,7 @@ export default function ExpenseGroupSwitcher({
   return (
     <div
       ref={switcherRef}
-      className="relative w-fit max-w-full"
+      className="relative w-fit min-w-0 max-w-full"
       onBlur={(event) => {
         const next = event.relatedTarget;
         // The create dialog is rendered in a portal and returns focus to its trigger.

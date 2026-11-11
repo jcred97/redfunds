@@ -17,6 +17,7 @@ type FormDialogProps = {
   triggerAriaLabel?: string;
   triggerFocusKey?: string;
   triggerVariant?: "primary" | "secondary" | "danger" | "menu";
+  triggerClassName?: string;
   destructive?: boolean;
   returnFocusId?: string;
   title: string;
@@ -38,6 +39,7 @@ export default function FormDialog({
   triggerAriaLabel,
   triggerFocusKey,
   triggerVariant = "primary",
+  triggerClassName,
   destructive = false,
   returnFocusId,
   title,
@@ -117,7 +119,14 @@ export default function FormDialog({
           button.dataset.dialogFocusKey === triggerFocusKey &&
           button.getClientRects().length > 0
       );
-      visibleTrigger?.focus();
+      if (visibleTrigger) {
+        visibleTrigger.focus();
+        return;
+      }
+    }
+
+    if (returnFocusId) {
+      document.getElementById(returnFocusId)?.focus();
     }
   }
 
@@ -195,7 +204,7 @@ export default function FormDialog({
         aria-controls={dialogId}
         onClick={openDialog}
         disabled={disabled}
-        className={triggerClass}
+        className={triggerClassName ?? triggerClass}
       >
         {triggerLabel}
       </button>

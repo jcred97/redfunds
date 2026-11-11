@@ -18,7 +18,7 @@ export default function ExpenseGroupsSkeleton() {
           >
             <div className="mb-4 flex items-start justify-between gap-3">
               <Skeleton className="h-7 w-3/5" />
-              <Skeleton className="h-6 w-14 rounded-full" />
+              <Skeleton className="h-5 w-5 rounded-md" />
             </div>
             <Skeleton className="mb-4 h-9 w-2/3" />
             <div className="flex gap-3">
