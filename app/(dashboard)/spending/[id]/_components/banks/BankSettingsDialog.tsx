@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { BankCatalogEntry } from "@/app/(dashboard)/_lib/banks/access";
 import { saveBankAssignment } from "@/app/(dashboard)/_lib/banks/mutations";
 import FormDialog from "@/app/components/dialogs/FormDialog";
+import BankLogo from "./BankLogo";
 
 const paymentMethods = [
   { name: "supportedDebitCard", label: "Debit card" },
@@ -37,11 +38,14 @@ export default function BankSettingsDialog({
     <FormDialog
       triggerLabel={(
         <>
-          <span className="block wrap-anywhere font-medium">{bank.name}</span>
-          <span className={`mt-1 block ${statusColor}`}>{status}</span>
+          <BankLogo name={bank.name} />
+          <span className="min-w-0">
+            <span className="block wrap-anywhere font-medium">{bank.name}</span>
+            <span className={`mt-1 block ${statusColor}`}>{status}</span>
+          </span>
         </>
       )}
-      triggerClassName="block h-full w-full cursor-pointer rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 text-left text-sm transition-colors hover:border-gray-600 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+      triggerClassName="flex h-full w-full cursor-pointer items-center gap-3 rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 text-left text-sm transition-colors hover:border-gray-600 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
       title={bank.name}
       description={
         bank.active
