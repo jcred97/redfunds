@@ -94,7 +94,7 @@ export default function ExpenseHistoryFilters({
           Apply filters
         </button>
         {hasFilters && (
-          <Link href={groupPath} className="text-sm text-gray-300 underline hover:text-white">
+          <Link href={`${groupPath}?month=`} className="text-sm text-gray-300 underline hover:text-white">
             Clear filters
           </Link>
         )}

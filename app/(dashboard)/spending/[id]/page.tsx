@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { parseExpenseMonth } from "@/app/lib/expenses/date";
+import { getManilaToday, parseExpenseMonth } from "@/app/lib/expenses/date";
 import { formatPesoAmount } from "@/app/lib/expenses/money";
 import { getBankCatalogForExpenseGroup, getExpenseBankOptions } from "@/app/(dashboard)/_lib/banks/queries";
 import {
@@ -45,7 +45,7 @@ export default async function ExpenseGroupPage({
   const requestedPage = typeof rawPage === "string" && /^[1-9]\d*$/.test(rawPage)
     ? Number(rawPage)
     : 1;
-  const month = parseExpenseMonth(rawMonth);
+  const month = rawMonth === undefined ? getManilaToday().slice(0, 7) : parseExpenseMonth(rawMonth);
   const requestedCategory = typeof category === "string" && /^[1-9]\d{0,9}$/.test(category)
     ? Number(category)
     : undefined;
@@ -61,6 +61,9 @@ export default async function ExpenseGroupPage({
   if (categoryId !== undefined) filterParams.set("category", String(categoryId));
   if (paymentMethod !== undefined) filterParams.set("paymentMethod", paymentMethod);
   if (bankFilterValue !== undefined) filterParams.set("bank", bankFilterValue);
+  const hasFilters = filterParams.size > 0;
+  // Keep all-time pagination from falling back to the current month.
+  if (month === undefined) filterParams.set("month", "");
   const filterQuery = filterParams.toString();
 
   const [expenseGroup, groups, expensePage, bankCatalog, bankOptions, historyBankOptions] = await Promise.all([
@@ -160,9 +163,9 @@ export default async function ExpenseGroupPage({
                   <span className="text-2xl">💸</span>
                 </div>
                 <h2 id="expense-history-title" tabIndex={-1} className="font-medium text-gray-300">
-                  {filterQuery ? "No expenses match these filters" : "No expenses yet"}
+                  {hasFilters ? "No expenses match these filters" : "No expenses yet"}
                 </h2>
-                {!filterQuery && (
+                {!hasFilters && (
                   <p className="mt-1 text-sm text-gray-500">
                     {categoryOptions.length === 0
                       ? "Add a category in the Categories tab to start recording expenses."
