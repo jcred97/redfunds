@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { parseExpenseMonth } from "@/app/lib/expenses/date";
 import { formatPesoAmount } from "@/app/lib/expenses/money";
+import ExpenseGroupBanks from "./_components/banks/ExpenseGroupBanks";
 import ExpenseCategories from "./_components/categories/ExpenseCategories";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
 import ExpenseGroupSwitcher from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSwitcher";
@@ -10,6 +11,7 @@ import ExpenseHistoryFilters from "./_components/expenses/ExpenseHistoryFilters"
 import NewCategoryButton from "./_components/categories/NewCategoryButton";
 import NewExpenseButton from "./_components/expenses/NewExpenseButton";
 import {
+  getBankAssignmentsByExpenseGroupId,
   getExpenseGroupById,
   getExpenseGroupOptions,
   getExpensePageByExpenseGroupId,
@@ -31,6 +33,8 @@ export default async function ExpenseGroupPage({
     await Promise.all([params, searchParams]);
   const id = Number(rawId);
   const showCategories = tab === "categories";
+  const showBanks = tab === "banks";
+  const showExpenses = !showCategories && !showBanks;
   const requestedPage = typeof rawPage === "string" && /^[1-9]\d*$/.test(rawPage)
     ? Number(rawPage)
     : 1;
@@ -43,19 +47,21 @@ export default async function ExpenseGroupPage({
     : undefined;
   const hasFilters = month !== undefined || categoryId !== undefined;
 
-  const [expenseGroup, groups, expensePage] = await Promise.all([
+  const [expenseGroup, groups, expensePage, bankAssignments] = await Promise.all([
     getExpenseGroupById(id),
     getExpenseGroupOptions(),
-    showCategories ? null : getExpensePageByExpenseGroupId(id, requestedPage, { month, categoryId }),
+    showExpenses ? getExpensePageByExpenseGroupId(id, requestedPage, { month, categoryId }) : null,
+    showBanks ? getBankAssignmentsByExpenseGroupId(id) : null,
   ]);
 
-  if (!expenseGroup || (!showCategories && !expensePage)) {
+  if (!expenseGroup || (showExpenses && !expensePage)) {
     notFound();
   }
 
   const groupPath = `/spending/${expenseGroup.id}`;
   const categoriesTab = "?tab=categories";
-  const tabSuffix = showCategories ? categoriesTab : "";
+  const banksTab = "?tab=banks";
+  const tabSuffix = showBanks ? banksTab : showCategories ? categoriesTab : "";
   const currentGroup = { id: expenseGroup.id, name: expenseGroup.name };
   const categoryOptions = expenseGroup.categories.map(({ id, name }) => ({ id, name }));
 
@@ -71,11 +77,12 @@ export default async function ExpenseGroupPage({
           />
           <ExpenseGroupSettings key={`settings-${expenseGroup.id}`} group={currentGroup} tabSuffix={tabSuffix} />
         </div>
-        <div className="mt-4 flex items-center justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
-          <nav aria-label="Expense group views" className="flex shrink-0 self-end">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
+          <nav aria-label="Expense group views" className="flex flex-wrap">
             {[
-              { label: "Expenses", href: groupPath, current: !showCategories },
+              { label: "Expenses", href: groupPath, current: showExpenses },
               { label: "Categories", href: groupPath + categoriesTab, current: showCategories },
+              { label: "Banks", href: groupPath + banksTab, current: showBanks },
             ].map(({ label, href, current }) => (
               <Link
                 key={label}
@@ -87,13 +94,15 @@ export default async function ExpenseGroupPage({
               </Link>
             ))}
           </nav>
-          <div className="min-w-0 pb-2 [&_button]:ml-auto [&_button]:whitespace-nowrap [&_p]:text-right max-sm:[&_button]:px-2.5 max-sm:[&_button]:text-xs">
-            {showCategories ? (
-              <NewCategoryButton expenseGroupId={expenseGroup.id} />
-            ) : (
-              <NewExpenseButton expenseGroupId={expenseGroup.id} categories={categoryOptions} />
-            )}
-          </div>
+          {!showBanks && (
+            <div className="ml-auto min-w-0 pb-2 [&_button]:ml-auto [&_button]:whitespace-nowrap [&_p]:text-right max-sm:[&_button]:px-2.5 max-sm:[&_button]:text-xs">
+              {showCategories ? (
+                <NewCategoryButton expenseGroupId={expenseGroup.id} />
+              ) : (
+                <NewExpenseButton expenseGroupId={expenseGroup.id} categories={categoryOptions} />
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -152,6 +161,8 @@ export default async function ExpenseGroupPage({
               />
             )}
           </>
+        ) : bankAssignments ? (
+          <ExpenseGroupBanks assignments={bankAssignments} />
         ) : (
           <ExpenseCategories expenseGroupId={expenseGroup.id} categories={expenseGroup.categories} />
         )}

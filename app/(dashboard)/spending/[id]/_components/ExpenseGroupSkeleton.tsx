@@ -12,12 +12,13 @@ export default function ExpenseGroupSkeleton() {
           <Skeleton className="h-8 w-44 sm:h-9 sm:w-52" />
           <Skeleton className="h-6 w-20 shrink-0" />
         </div>
-        <div className="mt-4 flex items-center justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
-          <div className="flex self-end text-sm font-medium text-gray-400">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
+          <div className="flex flex-wrap text-sm font-medium text-gray-400">
             <span className="px-2.5 py-3 sm:px-4">Expenses</span>
             <span className="px-2.5 py-3 sm:px-4">Categories</span>
+            <span className="px-2.5 py-3 sm:px-4">Banks</span>
           </div>
-          <div className="pb-2">
+          <div className="ml-auto pb-2">
             <Skeleton className="h-8 w-24 rounded-lg sm:h-9 sm:w-32" />
           </div>
         </div>

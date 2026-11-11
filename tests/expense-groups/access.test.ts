@@ -505,6 +505,22 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       await alice.delete(source.id);
     });
 
+    await t.test("bank assignments are visible only in their owner's expense group", async () => {
+      const bank = await client.bank.create({ data: { name: "Tab Test Bank", key: "tab test bank" } });
+      const assignment = await client.bankAssignment.create({
+        data: { expenseGroupId: a.id, bankId: bank.id, active: false },
+      });
+      await client.bankAssignment.create({ data: { expenseGroupId: legacy.id, bankId: bank.id } });
+
+      assert.deepEqual(await alice.getBankAssignmentsById(a.id), [
+        { id: assignment.id, active: false, bank: { name: bank.name, active: true } },
+      ]);
+      assert.deepEqual(await alice.getBankAssignmentsById(legacy.id), []);
+      assert.deepEqual(await bob.getBankAssignmentsById(a.id), []);
+      assert.deepEqual(await bob.getBankAssignmentsById(b.id), []);
+      await assert.rejects(anonymous.getBankAssignmentsById(a.id), /Sign in required/);
+    });
+
     await t.test("overview counts empty categories and sums large amounts without duplicating rows", async () => {
       const user = await client.user.create({
         data: { id: "overview", name: "Overview", email: "overview@example.test" },
