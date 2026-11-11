@@ -39,7 +39,7 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [x] Calculate totals in PostgreSQL and paginate expense history.
 - [ ] Add indexes based on actual filters and access patterns.
 - [x] Browse the Philippine bank catalog and configure enabled banks and payment methods in each expense group.
-- [ ] Offer enabled banks for the selected payment method in the expense form.
+- [x] Offer enabled banks for the selected payment method in the expense form.
 
 ### 4. Verify recovery and private access
 

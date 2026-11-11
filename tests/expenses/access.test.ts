@@ -561,6 +561,75 @@ test("expense writes validate money, dates, category membership, and current own
         assert.equal(changed.id, bobExpense.id);
       });
     });
+    await t.test("payment selection respects current group bank settings and preserves existing history", async () => {
+      const bank = await client.bank.create({
+        data: { name: "Expense Payment Test Bank", key: "expense payment test bank" },
+      });
+      const assignment = await client.bankAssignment.create({
+        data: {
+          expenseGroupId: aliceGroup.id,
+          bankId: bank.id,
+          supportedCreditCard: false,
+        },
+      });
+      const otherAssignment = await client.bankAssignment.create({
+        data: { expenseGroupId: aliceOtherGroup.id, bankId: bank.id },
+      });
+      const selection = {
+        ...validInput,
+        paymentMethod: "DEBIT_CARD",
+        bankAssignmentId: String(assignment.id),
+      };
+      const create = (input: typeof selection, submissionId = randomUUID()) =>
+        alice.create(aliceGroup.id, aliceCategory.id, input, submissionId);
+      const unavailable = /This bank is unavailable for the selected payment method in this expense group/;
+
+      await assert.rejects(create({ ...selection, paymentMethod: "CREDIT_CARD" }), unavailable);
+      await assert.rejects(create({ ...selection, bankAssignmentId: String(otherAssignment.id) }), unavailable);
+      await assert.rejects(create({ ...selection, bankAssignmentId: "2147483648" }), /Choose a valid bank/);
+      await assert.rejects(create({ ...selection, paymentMethod: "Unknown" }), /Choose a valid payment method/);
+      await assert.rejects(create({ ...selection, paymentMethod: "CASH" }), /to select a bank/);
+      await assert.rejects(create({ ...selection, paymentMethod: "" }), /to select a bank/);
+
+      const cash = await create({ ...selection, paymentMethod: "CASH", bankAssignmentId: "" });
+      assert.equal(cash.paymentMethod, "CASH");
+      assert.equal(cash.bankAssignmentId, null);
+
+      const submissionId = randomUUID();
+      await client.bank.update({ where: { id: bank.id }, data: { active: false } });
+      await assert.rejects(create(selection, submissionId), unavailable);
+      await client.bank.update({ where: { id: bank.id }, data: { active: true } });
+      const expense = await create(selection, submissionId);
+      assert.equal(expense.paymentMethod, "DEBIT_CARD");
+      assert.equal(expense.bankAssignmentId, assignment.id);
+      await assert.rejects(
+        create({ ...selection, paymentMethod: "BANK_TRANSFER" }, submissionId),
+        /already saved with different details/,
+      );
+      await client.bankAssignment.update({ where: { id: assignment.id }, data: { active: false } });
+      assert.equal((await create(selection, submissionId)).id, expense.id);
+      await assert.rejects(create(selection), unavailable);
+
+      const historical = await client.expense.update({
+        where: { id: expense.id },
+        data: { legacyBankName: "Preserved old bank" },
+      });
+      const edit = (input: typeof selection, updatedAt: Date) =>
+        alice.update(aliceGroup.id, expense.id, aliceCategory.id, input, updatedAt.toISOString());
+      const unchangedPayment = await edit({ ...selection, title: "Renamed expense" }, historical.updatedAt);
+      assert.equal(unchangedPayment.title, "Renamed expense");
+      assert.equal(unchangedPayment.bankAssignmentId, assignment.id);
+      assert.equal(unchangedPayment.legacyBankName, "Preserved old bank");
+      await assert.rejects(edit({ ...selection, paymentMethod: "BANK_TRANSFER" }, unchangedPayment.updatedAt), unavailable);
+      assert.deepEqual(await client.expense.findUnique({ where: { id: expense.id } }), unchangedPayment);
+
+      const changed = await edit({ ...selection, paymentMethod: "BANK_TRANSFER", bankAssignmentId: "" }, unchangedPayment.updatedAt);
+      assert.equal(changed.paymentMethod, "BANK_TRANSFER");
+      assert.equal(changed.bankAssignmentId, null);
+      assert.equal(changed.legacyBankName, null);
+      await assert.rejects(edit(selection, unchangedPayment.updatedAt), /This expense changed since you opened it/);
+    });
+
     await t.test("deletion authenticates and atomically checks the expense group owner", async (deleting) => {
       const target = await alice.create(aliceGroup.id, aliceCategory.id, validInput, randomUUID());
       const foreign = await bob.create(bobGroup.id, bobCategory.id, validInput, randomUUID());

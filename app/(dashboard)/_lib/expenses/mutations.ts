@@ -51,6 +51,8 @@ export async function createExpense(
         title: formData.get("title"),
         amount: formData.get("amount"),
         date: formData.get("date"),
+        paymentMethod: formData.get("paymentMethod"),
+        bankAssignmentId: formData.get("bankAssignmentId"),
       },
       formData.get("submissionId"),
     );
@@ -88,6 +90,8 @@ export async function updateExpense(
         title: formData.get("title"),
         amount: formData.get("amount"),
         date: formData.get("date"),
+        paymentMethod: formData.get("paymentMethod"),
+        bankAssignmentId: formData.get("bankAssignmentId"),
       },
       formData.get("expectedUpdatedAt"),
     );

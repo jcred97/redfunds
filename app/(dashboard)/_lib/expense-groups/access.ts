@@ -15,7 +15,7 @@ type ExpensePageRow = {
   page: bigint;
 } & (
   | { id: null }
-  | (Pick<Expense, "id" | "title" | "amountCentavos" | "date" | "updatedAt" | "categoryId" | "paymentMethod" | "legacyBankName"> & {
+  | (Pick<Expense, "id" | "title" | "amountCentavos" | "date" | "updatedAt" | "categoryId" | "paymentMethod" | "bankAssignmentId" | "legacyBankName"> & {
       categoryName: string;
       categoryIcon: string | null;
       bankName: string | null;
@@ -204,7 +204,7 @@ export function createExpenseGroupAccess(
         )
         SELECT pagination."totalExpenses", pagination."totalCentavos", pagination."totalPages", pagination.page,
           expense.id, expense.title, expense."amountCentavos", expense.date, expense."updatedAt", expense."categoryId",
-          expense."transactionType" AS "paymentMethod", expense.bank AS "legacyBankName",
+          expense."transactionType" AS "paymentMethod", expense."bankAssignmentId", expense.bank AS "legacyBankName",
           category.name AS "categoryName", category.icon AS "categoryIcon", bank.name AS "bankName"
         FROM pagination
         LEFT JOIN LATERAL (
@@ -240,6 +240,7 @@ export function createExpenseGroupAccess(
           updatedAt: row.updatedAt,
           categoryId: row.categoryId,
           paymentMethod: row.paymentMethod,
+          bankAssignmentId: row.bankAssignmentId,
           legacyBankName: row.legacyBankName,
           category: { name: row.categoryName, icon: row.categoryIcon },
           bankAssignment: row.bankName === null ? null : { bank: { name: row.bankName } },

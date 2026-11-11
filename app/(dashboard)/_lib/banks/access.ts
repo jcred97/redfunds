@@ -1,4 +1,9 @@
 import type { BankAssignment, PrismaClient } from "@/generated/prisma/client";
+import {
+  bankPaymentMethodFields,
+  type BankPaymentMethod,
+  type ExpenseBankOption,
+} from "@/app/lib/expenses/payment";
 
 const MAX_RECORD_ID = 2_147_483_647;
 const BANK_UNAVAILABLE = "This bank is unavailable for this expense group.";
@@ -40,6 +45,30 @@ function readCheckbox(formData: FormData, name: string) {
 
 export function createBankAccess(db: PrismaClient, requireUserId: () => Promise<string>) {
   return {
+    async listForExpenses(expenseGroupId: number): Promise<ExpenseBankOption[]> {
+      const userId = await requireUserId();
+      if (!validId(expenseGroupId)) return [];
+
+      const assignments = await db.bankAssignment.findMany({
+        where: { expenseGroup: { id: expenseGroupId, userId }, active: true, bank: { active: true } },
+        select: {
+          id: true,
+          bank: { select: { name: true } },
+          supportedDebitCard: true,
+          supportedCreditCard: true,
+          supportedBankTransfer: true,
+          supportedBankPayment: true,
+        },
+        orderBy: [{ bank: { name: "asc" } }, { id: "asc" }],
+      });
+      const methods = Object.keys(bankPaymentMethodFields) as BankPaymentMethod[];
+      return assignments.map((assignment) => ({
+        id: assignment.id,
+        name: assignment.bank.name,
+        paymentMethods: methods.filter((method) => assignment[bankPaymentMethodFields[method]]),
+      }));
+    },
+
     async list(expenseGroupId: number): Promise<BankCatalogEntry[]> {
       const userId = await requireUserId();
       if (!validId(expenseGroupId)) return [];

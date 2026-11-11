@@ -558,10 +558,16 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
         supportedBankPayment: false,
       });
       assert.equal((await findBank(bobBanks, b.id))?.assignment, null);
+      assert.deepEqual(await aliceBanks.listForExpenses(a.id), [
+        { id: assignment.id, name: bank.name, paymentMethods: ["DEBIT_CARD", "BANK_TRANSFER"] },
+      ]);
+      assert.deepEqual(await bobBanks.listForExpenses(a.id), []);
+      assert.deepEqual(await bobBanks.listForExpenses(b.id), []);
 
       const expense = await client.expense.findFirstOrThrow({ where: { expenseGroupId: a.id } });
       await client.expense.update({ where: { id: expense.id }, data: { bankAssignmentId: assignment.id } });
       await aliceBanks.save(settings(a.id, bank.id));
+      assert.deepEqual(await aliceBanks.listForExpenses(a.id), []);
       assert.deepEqual((await findBank())?.assignment, {
         active: false,
         supportedDebitCard: true,
@@ -578,6 +584,7 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       assert.equal((await client.bankAssignment.findUniqueOrThrow({ where })).id, assignment.id);
       assert.equal((await findBank())?.assignment?.supportedDebitCard, false);
       await client.bank.update({ where: { id: bank.id }, data: { active: false } });
+      assert.deepEqual(await aliceBanks.listForExpenses(a.id), []);
       assert.equal((await findBank())?.active, false);
       assert.equal(await findBank(bobBanks, b.id), undefined);
       await assert.rejects(aliceBanks.save(enableBank), unavailable);

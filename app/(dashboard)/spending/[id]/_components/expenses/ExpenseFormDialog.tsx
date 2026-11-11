@@ -8,6 +8,8 @@ import {
 } from "@/app/(dashboard)/_lib/expenses/mutations";
 import { getManilaToday } from "@/app/lib/expenses/date";
 import { formatPesoInput } from "@/app/lib/expenses/money";
+import { paymentMethodLabels, type ExpenseBankOption } from "@/app/lib/expenses/payment";
+import type { PaymentMethod } from "@/generated/prisma/enums";
 
 export type EditableExpense = {
   id: number;
@@ -16,17 +18,22 @@ export type EditableExpense = {
   date: string;
   updatedAt: string;
   categoryId: number;
+  paymentMethod: PaymentMethod | null;
+  bankAssignmentId: number | null;
+  bankName: string | null;
 };
 
 type ExpenseFormDialogProps = {
   expenseGroupId: number;
   categories: { id: number; name: string }[];
+  bankOptions: ExpenseBankOption[];
   expense?: EditableExpense;
 };
 
 export default function ExpenseFormDialog({
   expenseGroupId,
   categories,
+  bankOptions,
   expense,
 }: ExpenseFormDialogProps) {
   const fieldId = useId();
@@ -36,7 +43,21 @@ export default function ExpenseFormDialog({
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
+  const [bankAssignmentId, setBankAssignmentId] = useState("");
   const hasCategories = categories.length > 0;
+  const showBanks = paymentMethod !== "" && paymentMethod !== "CASH";
+  const eligibleBanks = showBanks
+    ? bankOptions.filter((bank) => bank.paymentMethods.includes(paymentMethod))
+    : [];
+  const hasRecordedBank =
+    expense?.bankName != null &&
+    paymentMethod === (expense.paymentMethod ?? "") &&
+    bankAssignmentId === String(expense.bankAssignmentId ?? "");
+  const showUnavailableBank =
+    hasRecordedBank &&
+    bankAssignmentId !== "" &&
+    !eligibleBanks.some((bank) => String(bank.id) === bankAssignmentId);
 
   function resetFields() {
     if (expense) {
@@ -45,17 +66,36 @@ export default function ExpenseFormDialog({
       setAmount(formatPesoInput(expense.amountCentavos));
       setDate(expense.date.slice(0, 10));
       setCategoryId(String(expense.categoryId));
+      setPaymentMethod(expense.paymentMethod ?? "");
+      setBankAssignmentId(String(expense.bankAssignmentId ?? ""));
     } else {
       submissionId.current = crypto.randomUUID();
       setTitle("");
       setAmount("");
       setDate(getManilaToday());
       setCategoryId(String(categories[0]?.id ?? ""));
+      setPaymentMethod("");
+      setBankAssignmentId("");
+    }
+  }
+
+  function changePaymentMethod(method: PaymentMethod | "") {
+    setPaymentMethod(method);
+    if (
+      method === "" ||
+      method === "CASH" ||
+      !bankOptions.some(
+        (bank) => String(bank.id) === bankAssignmentId && bank.paymentMethods.includes(method)
+      )
+    ) {
+      setBankAssignmentId("");
     }
   }
 
   async function saveExpenseInGroup(formData: FormData) {
     formData.set("expenseGroupId", String(expenseGroupId));
+    formData.set("paymentMethod", paymentMethod);
+    formData.set("bankAssignmentId", bankAssignmentId);
 
     if (expense) {
       formData.set("expenseId", String(expense.id));
@@ -69,7 +109,7 @@ export default function ExpenseFormDialog({
   }
 
   const inputClass =
-    "mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white outline-none focus:border-red-500 disabled:opacity-60";
+    "mt-2 w-full min-w-0 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white outline-none focus:border-red-500 disabled:opacity-60";
 
   return (
     <div>
@@ -166,6 +206,56 @@ export default function ExpenseFormDialog({
             ))}
           </select>
         </div>
+
+        <div>
+          <label htmlFor={`${fieldId}-payment-method`} className="text-sm text-gray-400">
+            Payment method
+          </label>
+          <select
+            id={`${fieldId}-payment-method`}
+            name="paymentMethod"
+            value={paymentMethod}
+            onChange={(event) => changePaymentMethod(event.target.value as PaymentMethod | "")}
+            className={inputClass}
+          >
+            <option value="">No payment method</option>
+            {Object.entries(paymentMethodLabels).map(([method, label]) => (
+              <option key={method} value={method}>{label}</option>
+            ))}
+          </select>
+        </div>
+
+        {showBanks && (
+          <div>
+            <label htmlFor={`${fieldId}-bank`} className="text-sm text-gray-400">
+              Bank
+            </label>
+            <select
+              id={`${fieldId}-bank`}
+              name="bankAssignmentId"
+              value={bankAssignmentId}
+              onChange={(event) => setBankAssignmentId(event.target.value)}
+              aria-describedby={eligibleBanks.length === 0 ? `${fieldId}-bank-help` : undefined}
+              className={inputClass}
+            >
+              <option value="">No bank</option>
+              {showUnavailableBank && (
+                <option value={bankAssignmentId} disabled>{expense?.bankName} (previously selected)</option>
+              )}
+              {eligibleBanks.map((bank) => (
+                <option key={bank.id} value={bank.id}>{bank.name}</option>
+              ))}
+            </select>
+            {eligibleBanks.length === 0 && (
+              <p id={`${fieldId}-bank-help`} className="mt-1 text-xs text-gray-400">
+                No banks are enabled for this payment method.
+              </p>
+            )}
+          </div>
+        )}
+        {hasRecordedBank && (!showBanks || bankAssignmentId === "") && (
+          <p className="wrap-anywhere text-sm text-gray-400">Recorded bank: {expense?.bankName}</p>
+        )}
       </FormDialog>
 
       {!hasCategories && (

@@ -2,12 +2,14 @@ import Link from "next/link";
 import type { getExpensePageByExpenseGroupId } from "@/app/(dashboard)/_lib/expense-groups/queries";
 import { formatPesoAmount } from "@/app/lib/expenses/money";
 import { formatExpenseDate } from "@/app/lib/expenses/date";
+import { paymentMethodLabels, type ExpenseBankOption } from "@/app/lib/expenses/payment";
 import EditExpenseButton from "./EditExpenseButton";
 import DeleteExpenseButton from "./DeleteExpenseButton";
 
 type ExpenseHistoryProps = {
   expenseGroupId: number;
   categories: { id: number; name: string }[];
+  bankOptions: ExpenseBankOption[];
   expenses: NonNullable<Awaited<ReturnType<typeof getExpensePageByExpenseGroupId>>>["expenses"];
   page: number;
   totalPages: number;
@@ -17,9 +19,14 @@ type ExpenseHistoryProps = {
 
 const pageLinkClass = "rounded-lg border px-3 py-2 text-sm font-medium";
 
+function expenseBankName(expense: ExpenseHistoryProps["expenses"][number]) {
+  return expense.bankAssignment?.bank.name ?? expense.legacyBankName;
+}
+
 export default function ExpenseHistory({
   expenseGroupId,
   categories,
+  bankOptions,
   expenses,
   page,
   totalPages,
@@ -41,6 +48,7 @@ export default function ExpenseHistory({
         <EditExpenseButton
           expenseGroupId={expenseGroupId}
           categories={categories}
+          bankOptions={bankOptions}
           expense={{
             id: expense.id,
             title: expense.title,
@@ -48,6 +56,9 @@ export default function ExpenseHistory({
             date: expense.date.toISOString(),
             updatedAt: expense.updatedAt.toISOString(),
             categoryId: expense.categoryId,
+            paymentMethod: expense.paymentMethod,
+            bankAssignmentId: expense.bankAssignmentId,
+            bankName: expenseBankName(expense),
           }}
         />
         <DeleteExpenseButton
@@ -69,22 +80,32 @@ export default function ExpenseHistory({
       </h2>
 
       <ul className="space-y-3 sm:hidden">
-        {expenses.map((expense) => (
-          <li key={expense.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <h3 className="min-w-0 flex-1 break-words font-medium">
-                {expense.title}
-              </h3>
-              <p className="whitespace-nowrap font-semibold text-red-400">
-                {formatPesoAmount(expense.amountCentavos)}
+        {expenses.map((expense) => {
+          const paymentDetails = [
+            expense.paymentMethod && paymentMethodLabels[expense.paymentMethod],
+            expenseBankName(expense),
+          ].filter(Boolean).join(" · ");
+
+          return (
+            <li key={expense.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h3 className="min-w-0 flex-1 break-words font-medium">
+                  {expense.title}
+                </h3>
+                <p className="whitespace-nowrap font-semibold text-red-400">
+                  {formatPesoAmount(expense.amountCentavos)}
+                </p>
+              </div>
+              <p className="mt-2 break-words text-sm text-gray-400">
+                {formatExpenseDate(expense.date)} · {expense.category.name}
               </p>
-            </div>
-            <p className="mt-2 break-words text-sm text-gray-400">
-              {formatExpenseDate(expense.date)} · {expense.category.name}
-            </p>
-            <div className="mt-3 flex justify-end">{expenseActions(expense)}</div>
-          </li>
-        ))}
+              {paymentDetails && (
+                <p className="mt-1 wrap-anywhere text-sm text-gray-400">{paymentDetails}</p>
+              )}
+              <div className="mt-3 flex justify-end">{expenseActions(expense)}</div>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="hidden overflow-x-auto rounded-xl border border-gray-800 bg-gray-900 sm:block">
@@ -111,10 +132,10 @@ export default function ExpenseHistory({
                   {expense.category.name}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
-                  {expense.paymentMethod ? expense.paymentMethod.replace(/_/g, " ") : "—"}
+                  {expense.paymentMethod ? paymentMethodLabels[expense.paymentMethod] : "—"}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
-                  {expense.bankAssignment?.bank.name ?? expense.legacyBankName ?? "—"}
+                  {expenseBankName(expense) ?? "—"}
                 </td>
                 <td className="px-6 py-4 text-right font-semibold text-red-400">
                   {formatPesoAmount(expense.amountCentavos)}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { parseExpenseMonth } from "@/app/lib/expenses/date";
 import { formatPesoAmount } from "@/app/lib/expenses/money";
-import { getBankCatalogForExpenseGroup } from "@/app/(dashboard)/_lib/banks/queries";
+import { getBankCatalogForExpenseGroup, getExpenseBankOptions } from "@/app/(dashboard)/_lib/banks/queries";
 import ExpenseGroupBanks from "./_components/banks/ExpenseGroupBanks";
 import ExpenseCategories from "./_components/categories/ExpenseCategories";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
@@ -47,11 +47,12 @@ export default async function ExpenseGroupPage({
     : undefined;
   const hasFilters = month !== undefined || categoryId !== undefined;
 
-  const [expenseGroup, groups, expensePage, bankCatalog] = await Promise.all([
+  const [expenseGroup, groups, expensePage, bankCatalog, bankOptions] = await Promise.all([
     getExpenseGroupById(id),
     getExpenseGroupOptions(),
     showExpenses ? getExpensePageByExpenseGroupId(id, requestedPage, { month, categoryId }) : null,
     showBanks ? getBankCatalogForExpenseGroup(id) : null,
+    showExpenses ? getExpenseBankOptions(id) : [],
   ]);
 
   if (!expenseGroup || (showExpenses && !expensePage) || (showBanks && !bankCatalog)) {
@@ -99,7 +100,7 @@ export default async function ExpenseGroupPage({
               {showCategories ? (
                 <NewCategoryButton expenseGroupId={expenseGroup.id} />
               ) : (
-                <NewExpenseButton expenseGroupId={expenseGroup.id} categories={categoryOptions} />
+                <NewExpenseButton expenseGroupId={expenseGroup.id} categories={categoryOptions} bankOptions={bankOptions} />
               )}
             </div>
           )}
@@ -153,6 +154,7 @@ export default async function ExpenseGroupPage({
               <ExpenseHistory
                 expenseGroupId={expenseGroup.id}
                 categories={categoryOptions}
+                bankOptions={bankOptions}
                 expenses={expensePage.expenses}
                 page={expensePage.page}
                 totalPages={expensePage.totalPages}
