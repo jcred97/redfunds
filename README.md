@@ -30,7 +30,9 @@ Implemented source includes:
 
 Sessions last seven days and can renew after one day. Server-rendered pages only validate the session; browser requests renew both the database expiry and the HTTP-only cookie together. A shared browser component checks the session on mount, when the window regains focus or reconnects, and every five minutes while a session exists. Expired or revoked sessions cannot be renewed.
 
-The app is an early prototype. Email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget and bank-management screens are not implemented; their core schema is in place. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
+The Banks tab includes a Philippine starter catalog. Expense group owners can enable banks and choose the payment methods they use in each group. Apply the committed migrations to populate the catalog in an existing database. Using these settings in the expense form is planned.
+
+The app is an early prototype. Email verification, password recovery, Google sign-in, recurring entries, exchange rates, and offline synchronization are not implemented. The standalone categories page is a placeholder. Budget management is planned. Expense and budget amounts use exact integer centavos; see the migration notes below before deploying this version to an existing database.
 
 Full-screen loading feedback is reserved for sign-in, sign-up, and sign-out. After successful authentication and navigation, the home header stays visible while expense-group cards load into a skeleton. Expense-group navigation shows a page-shaped skeleton inside the signed-in layout while its data loads. Skeletons crossfade into content, respect reduced motion, and never display made-up amounts or names. There is no global loading placeholder. Saves and edits keep their pending/error feedback inside the form dialog.
 

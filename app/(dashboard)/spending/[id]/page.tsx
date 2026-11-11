@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { parseExpenseMonth } from "@/app/lib/expenses/date";
 import { formatPesoAmount } from "@/app/lib/expenses/money";
+import { getBankCatalogForExpenseGroup } from "@/app/(dashboard)/_lib/banks/queries";
 import ExpenseGroupBanks from "./_components/banks/ExpenseGroupBanks";
 import ExpenseCategories from "./_components/categories/ExpenseCategories";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
@@ -11,7 +12,6 @@ import ExpenseHistoryFilters from "./_components/expenses/ExpenseHistoryFilters"
 import NewCategoryButton from "./_components/categories/NewCategoryButton";
 import NewExpenseButton from "./_components/expenses/NewExpenseButton";
 import {
-  getBankAssignmentsByExpenseGroupId,
   getExpenseGroupById,
   getExpenseGroupOptions,
   getExpensePageByExpenseGroupId,
@@ -47,14 +47,14 @@ export default async function ExpenseGroupPage({
     : undefined;
   const hasFilters = month !== undefined || categoryId !== undefined;
 
-  const [expenseGroup, groups, expensePage, bankAssignments] = await Promise.all([
+  const [expenseGroup, groups, expensePage, bankCatalog] = await Promise.all([
     getExpenseGroupById(id),
     getExpenseGroupOptions(),
     showExpenses ? getExpensePageByExpenseGroupId(id, requestedPage, { month, categoryId }) : null,
-    showBanks ? getBankAssignmentsByExpenseGroupId(id) : null,
+    showBanks ? getBankCatalogForExpenseGroup(id) : null,
   ]);
 
-  if (!expenseGroup || (showExpenses && !expensePage)) {
+  if (!expenseGroup || (showExpenses && !expensePage) || (showBanks && !bankCatalog)) {
     notFound();
   }
 
@@ -161,8 +161,8 @@ export default async function ExpenseGroupPage({
               />
             )}
           </>
-        ) : bankAssignments ? (
-          <ExpenseGroupBanks assignments={bankAssignments} />
+        ) : bankCatalog ? (
+          <ExpenseGroupBanks key={expenseGroup.id} expenseGroupId={expenseGroup.id} banks={bankCatalog} />
         ) : (
           <ExpenseCategories expenseGroupId={expenseGroup.id} categories={expenseGroup.categories} />
         )}

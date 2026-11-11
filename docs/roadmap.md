@@ -10,7 +10,7 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 
 ### 1. Make real data dependable
 
-- [x] Adapt the core ExpenseGroup, Category, Expense, Budget, Bank, and BankAssignment schema while preserving legacy records. Use PaymentMethod and legacyBankName in application code with mappings to existing database identifiers. See [data model](data-model.md). Budget/bank management screens remain planned; exchange rates are deferred.
+- [x] Adapt the core ExpenseGroup, Category, Expense, Budget, Bank, and BankAssignment schema while preserving legacy records. Use PaymentMethod and legacyBankName in application code with mappings to existing database identifiers. See [data model](data-model.md). Budget management and exchange rates remain planned.
 
 - [x] Implement integer-centavo storage, exact parsing/formatting/totals, and a transactional migration with conversion and rollback tests. Apply the migration together with the matching application release; the shared database rollout is a separate deployment step.
 - [x] Define expense dates as calendar days: default to today in `Asia/Manila`, store the selected day at UTC midnight in the existing timestamp column, and display its UTC calendar day. Existing timestamps are preserved.
@@ -38,6 +38,8 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [x] Filter expense history by month and category. Keep the selection across pages and update the expense count and total after changes.
 - [x] Calculate totals in PostgreSQL and paginate expense history.
 - [ ] Add indexes based on actual filters and access patterns.
+- [x] Browse the Philippine bank catalog and configure enabled banks and payment methods in each expense group.
+- [ ] Offer enabled banks for the selected payment method in the expense form.
 
 ### 4. Verify recovery and private access
 

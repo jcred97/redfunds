@@ -130,6 +130,11 @@ export default function FormDialog({
     }
   }
 
+  function handleClose() {
+    setOpen(false);
+    restoreTriggerFocus();
+  }
+
   function handleBackdropClick(event: MouseEvent<HTMLDialogElement>) {
     if (event.target !== event.currentTarget) {
       return;
@@ -166,6 +171,8 @@ export default function FormDialog({
           setError(result.error);
         } else if (result && "success" in result) {
           dialogRef.current?.close();
+          // A server refresh can replace the dialog before its native close event arrives.
+          handleClose();
         }
       } catch {
         setError(failureMessage);
@@ -221,10 +228,7 @@ export default function FormDialog({
                 event.preventDefault();
               }
             }}
-            onClose={() => {
-              setOpen(false);
-              restoreTriggerFocus();
-            }}
+            onClose={handleClose}
             onClick={handleBackdropClick}
             className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-xl border border-gray-800 bg-gray-900 p-6 text-white backdrop:bg-black/60"
           >

@@ -6,6 +6,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
+import { createBankAccess } from "../../app/(dashboard)/_lib/banks/access";
 import { createExpenseGroupAccess } from "../../app/(dashboard)/_lib/expense-groups/access";
 
 test("expense-group access isolates users and unclaimed data using real Prisma queries", async (t) => {
@@ -505,20 +506,84 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       await alice.delete(source.id);
     });
 
-    await t.test("bank assignments are visible only in their owner's expense group", async () => {
+    await t.test("bank catalog settings are private to their expense group and preserve history", async () => {
+      const aliceBanks = createBankAccess(client, async () => "alice");
+      const bobBanks = createBankAccess(client, async () => "bob");
+      const anonymousBanks = createBankAccess(client, async () => {
+        throw new Error("Sign in required");
+      });
       const bank = await client.bank.create({ data: { name: "Tab Test Bank", key: "tab test bank" } });
-      const assignment = await client.bankAssignment.create({
-        data: { expenseGroupId: a.id, bankId: bank.id, active: false },
+      const retired = await client.bank.create({
+        data: { name: "Retired Test Bank", key: "retired test bank", active: false },
       });
       await client.bankAssignment.create({ data: { expenseGroupId: legacy.id, bankId: bank.id } });
+      const findBank = async (access = aliceBanks, groupId = a.id, bankId = bank.id) =>
+        (await access.list(groupId)).find((entry) => entry.id === bankId);
+      const settings = (groupId: number, bankId: number, ...checked: string[]) => {
+        const data = new FormData();
+        data.set("expenseGroupId", String(groupId));
+        data.set("bankId", String(bankId));
+        for (const field of checked) data.set(field, "on");
+        return data;
+      };
+      const enableBank = settings(a.id, bank.id, "active", "supportedDebitCard", "supportedBankTransfer");
+      const unavailable = /This bank is unavailable for this expense group/;
 
-      assert.deepEqual(await alice.getBankAssignmentsById(a.id), [
-        { id: assignment.id, active: false, bank: { name: bank.name, active: true } },
-      ]);
-      assert.deepEqual(await alice.getBankAssignmentsById(legacy.id), []);
-      assert.deepEqual(await bob.getBankAssignmentsById(a.id), []);
-      assert.deepEqual(await bob.getBankAssignmentsById(b.id), []);
-      await assert.rejects(anonymous.getBankAssignmentsById(a.id), /Sign in required/);
+      assert.equal((await findBank())?.assignment, null);
+      assert.equal(await findBank(aliceBanks, a.id, retired.id), undefined);
+      assert.deepEqual(await aliceBanks.list(legacy.id), []);
+      assert.deepEqual(await bobBanks.list(a.id), []);
+      await assert.rejects(anonymousBanks.list(a.id), /Sign in required/);
+      await assert.rejects(anonymousBanks.save(enableBank), /Sign in required/);
+      await assert.rejects(bobBanks.save(enableBank), unavailable);
+      await assert.rejects(bobBanks.save(settings(a.id, bank.id)), unavailable);
+      await assert.rejects(aliceBanks.save(settings(legacy.id, bank.id, "active", "supportedDebitCard")), unavailable);
+      await assert.rejects(aliceBanks.save(settings(a.id, retired.id, "active", "supportedDebitCard")), unavailable);
+      await assert.rejects(aliceBanks.save(settings(a.id, bank.id, "active")), /Choose at least one payment method/);
+      const invalid = settings(a.id, bank.id, "active");
+      invalid.set("supportedCreditCard", "false");
+      await assert.rejects(aliceBanks.save(invalid), /settings are invalid/);
+      await aliceBanks.save(settings(a.id, bank.id));
+      assert.equal((await findBank())?.assignment, null);
+
+      await aliceBanks.save(enableBank);
+      await aliceBanks.save(enableBank);
+      const where = { expenseGroupId_bankId: { expenseGroupId: a.id, bankId: bank.id } };
+      const assignment = await client.bankAssignment.findUniqueOrThrow({ where });
+      assert.deepEqual((await findBank())?.assignment, {
+        active: true,
+        supportedDebitCard: true,
+        supportedCreditCard: false,
+        supportedBankTransfer: true,
+        supportedBankPayment: false,
+      });
+      assert.equal((await findBank(bobBanks, b.id))?.assignment, null);
+
+      const expense = await client.expense.findFirstOrThrow({ where: { expenseGroupId: a.id } });
+      await client.expense.update({ where: { id: expense.id }, data: { bankAssignmentId: assignment.id } });
+      await aliceBanks.save(settings(a.id, bank.id));
+      assert.deepEqual((await findBank())?.assignment, {
+        active: false,
+        supportedDebitCard: true,
+        supportedCreditCard: false,
+        supportedBankTransfer: true,
+        supportedBankPayment: false,
+      });
+      assert.equal(
+        (await alice.getExpensesById(a.id)).find((row) => row.id === expense.id)?.bankAssignment?.bank.name,
+        bank.name,
+      );
+
+      await aliceBanks.save(settings(a.id, bank.id, "active", "supportedCreditCard"));
+      assert.equal((await client.bankAssignment.findUniqueOrThrow({ where })).id, assignment.id);
+      assert.equal((await findBank())?.assignment?.supportedDebitCard, false);
+      await client.bank.update({ where: { id: bank.id }, data: { active: false } });
+      assert.equal((await findBank())?.active, false);
+      assert.equal(await findBank(bobBanks, b.id), undefined);
+      await assert.rejects(aliceBanks.save(enableBank), unavailable);
+      await aliceBanks.save(settings(a.id, bank.id));
+      assert.equal((await findBank())?.assignment?.active, false);
+      assert.equal((await findBank())?.assignment?.supportedCreditCard, true);
     });
 
     await t.test("overview counts empty categories and sums large amounts without duplicating rows", async () => {

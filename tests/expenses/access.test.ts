@@ -295,8 +295,8 @@ test("expense writes validate money, dates, category membership, and current own
       const replacementCategory = await client.category.create({
         data: { name: "Transport", expenseGroupId: aliceGroup.id },
       });
-      const bank = await client.bank.create({
-        data: { name: "BPI", key: "bpi" },
+      const bank = await client.bank.findUniqueOrThrow({
+        where: { key: "bpi" },
       });
       const bankAssignment = await client.bankAssignment.create({
         data: { bankId: bank.id, expenseGroupId: aliceGroup.id },

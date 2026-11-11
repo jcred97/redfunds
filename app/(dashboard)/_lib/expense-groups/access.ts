@@ -143,21 +143,6 @@ export function createExpenseGroupAccess(
       });
     },
 
-    async getBankAssignmentsById(id: number) {
-      const userId = await requireUserId();
-      if (!validId(id)) return [];
-
-      return db.bankAssignment.findMany({
-        where: { expenseGroup: { id, userId } },
-        select: {
-          id: true,
-          active: true,
-          bank: { select: { name: true, active: true } },
-        },
-        orderBy: [{ bank: { name: "asc" } }, { id: "asc" }],
-      });
-    },
-
     async getExpensesById(id: number) {
       const userId = await requireUserId();
 

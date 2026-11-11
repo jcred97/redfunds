@@ -18,10 +18,6 @@ export async function getExpenseGroupById(id: number) {
   return access.getById(id);
 }
 
-export async function getBankAssignmentsByExpenseGroupId(id: number) {
-  return access.getBankAssignmentsById(id);
-}
-
 export async function getExpensesByExpenseGroupId(id: number) {
   return access.getExpensesById(id);
 }
