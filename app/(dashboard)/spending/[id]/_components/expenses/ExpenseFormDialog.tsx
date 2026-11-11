@@ -46,10 +46,17 @@ export default function ExpenseFormDialog({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("");
   const [bankAssignmentId, setBankAssignmentId] = useState("");
   const hasCategories = categories.length > 0;
-  const showBanks = paymentMethod !== "" && paymentMethod !== "CASH";
-  const eligibleBanks = showBanks
+  const canSelectBank = paymentMethod !== "" && paymentMethod !== "CASH";
+  const eligibleBanks = canSelectBank
     ? bankOptions.filter((bank) => bank.paymentMethods.includes(paymentMethod))
     : [];
+  const bankHelp = paymentMethod === ""
+    ? "Choose a payment method to see eligible banks."
+    : paymentMethod === "CASH"
+      ? "Cash expenses don't use a bank."
+      : eligibleBanks.length === 0
+        ? "Enable a bank for this payment method in the Banks tab."
+        : null;
   const hasRecordedBank =
     expense?.bankName != null &&
     paymentMethod === (expense.paymentMethod ?? "") &&
@@ -225,17 +232,18 @@ export default function ExpenseFormDialog({
           </select>
         </div>
 
-        {showBanks && (
+        {(!expense || canSelectBank) && (
           <div>
             <label htmlFor={`${fieldId}-bank`} className="text-sm text-gray-400">
-              Bank
+              Bank <span className="text-xs">(optional)</span>
             </label>
             <select
               id={`${fieldId}-bank`}
               name="bankAssignmentId"
               value={bankAssignmentId}
               onChange={(event) => setBankAssignmentId(event.target.value)}
-              aria-describedby={eligibleBanks.length === 0 ? `${fieldId}-bank-help` : undefined}
+              disabled={!canSelectBank}
+              aria-describedby={bankHelp ? `${fieldId}-bank-help` : undefined}
               className={inputClass}
             >
               <option value="">No bank</option>
@@ -246,14 +254,14 @@ export default function ExpenseFormDialog({
                 <option key={bank.id} value={bank.id}>{bank.name}</option>
               ))}
             </select>
-            {eligibleBanks.length === 0 && (
+            {bankHelp && (
               <p id={`${fieldId}-bank-help`} className="mt-1 text-xs text-gray-400">
-                No banks are enabled for this payment method.
+                {bankHelp}
               </p>
             )}
           </div>
         )}
-        {hasRecordedBank && (!showBanks || bankAssignmentId === "") && (
+        {hasRecordedBank && (!canSelectBank || bankAssignmentId === "") && (
           <p className="wrap-anywhere text-sm text-gray-400">Recorded bank: {expense?.bankName}</p>
         )}
       </FormDialog>
