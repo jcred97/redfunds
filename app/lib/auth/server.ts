@@ -8,7 +8,7 @@ const baseURL = process.env.BETTER_AUTH_URL;
 
 if (!secret || !baseURL) {
   throw new Error(
-    "Configure BETTER_AUTH_SECRET and BETTER_AUTH_URL before starting RedFunds."
+    "Configure BETTER_AUTH_SECRET and BETTER_AUTH_URL before starting RedTally."
   );
 }
 

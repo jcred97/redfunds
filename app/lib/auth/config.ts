@@ -33,7 +33,7 @@ export function createAuth(
   }
 
   return betterAuth({
-    appName: "RedFunds",
+    appName: "RedTally",
     secret: config.secret,
     baseURL: url.origin,
     database: prismaAdapter(prisma, { provider: "postgresql" }),

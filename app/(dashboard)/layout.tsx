@@ -18,7 +18,7 @@ export default async function DashboardLayout({
             href="/"
             className="shrink-0 rounded-sm text-lg font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 sm:text-xl"
           >
-            Red<span className="text-red-500">Funds</span>
+            Red<span className="text-red-500">Tally</span>
           </Link>
           <nav aria-label="Main navigation" className="mr-auto">
             <Link

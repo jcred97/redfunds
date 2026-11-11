@@ -124,11 +124,11 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           aria-labelledby="auth-title"
         >
           <p className="mb-8 text-xl font-bold tracking-tight">
-            Red<span className="text-red-500">Funds</span>
+            Red<span className="text-red-500">Tally</span>
           </p>
 
           <h1 id="auth-title" className="text-2xl font-semibold">
-            {signingUp ? "Create your account" : "Sign in to RedFunds"}
+            {signingUp ? "Create your account" : "Sign in to RedTally"}
           </h1>
 
           <p className="mt-2 text-sm text-gray-400">

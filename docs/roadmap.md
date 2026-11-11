@@ -1,4 +1,4 @@
-# RedFunds roadmap
+# RedTally roadmap
 
 Planning baseline: October 22, 2026. All unchecked items below are planned work, not implemented capabilities.
 
@@ -69,7 +69,7 @@ After the daily workflow is useful:
 
 ## Before a multi-user product launch
 
-- Revisit the RedFunds name, domains, and trademark searches. The provisional naming decision is not clearance.
+- Confirm domain availability and trademark clearance for RedTally.
 - Maintain user-ownership checks and isolation tests as new reads and mutations are added. If shared finances enter scope, introduce explicit workspace membership and roles.
 - Review backup operations, migration safety, monitoring, abuse controls, and export/account-deletion behavior.
 - Add billing, external integrations, and larger background-job infrastructure only when required by the product scope.
