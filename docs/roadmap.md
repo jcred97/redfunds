@@ -2,7 +2,7 @@
 
 Planning baseline: October 22, 2026. All unchecked items below are planned work, not implemented capabilities.
 
-Release update: October 25, 2026. [PR #1](https://github.com/jcred97/redfunds/pull/1) merged as `39be226038cb867de9a98fbfb357e013eace4236`; the authentication migration was applied and the matching Vercel production deployment reached ready status. A backup restore was verified, all 25 original business rows were preserved, and the five legacy expense groups remain unclaimed.
+Release update: October 25, 2026. [PR #1](https://github.com/jcred97/redtally/pull/1) merged as `39be226038cb867de9a98fbfb357e013eace4236`; the authentication migration was applied and the matching Vercel production deployment reached ready status. A backup restore was verified, all 25 original business rows were preserved, and the five legacy expense groups remain unclaimed.
 
 ## Next milestone: private-account daily expense tracking
 
