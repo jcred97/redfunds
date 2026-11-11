@@ -23,10 +23,10 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [ ] Configure email delivery, email verification, and password recovery. Google sign-in remains deferred.
 
 - [x] Implement owner-only category creation and category lists within an Expense Group, with server validation and accessible pending/error feedback.
-- [ ] Implement category editing and deliberate deletion/archive behavior within an Expense Group.
+- [x] Allow owners to rename categories and delete empty categories after confirmation. Categories with expenses require moving or deleting those expenses first.
 - [x] Wire New Expense to a working owner-only creation form.
 - [x] Add owner-only expense editing with the same validation and draft protection as creation.
-- [ ] Add expense deletion with confirmation.
+- [x] Add owner-only expense deletion with a confirmation showing the expense title and amount.
 - [x] Validate title, amount, date, and category on the server. Ensure a submitted category belongs to the intended Expense Group and its signed-in owner.
 - [x] Provide pending, success, and error feedback for creation; preserve entered values after failed saves.
 
@@ -36,7 +36,8 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [x] Provide responsive summaries and a compact expense list with Edit actions on narrow screens; retain a table on desktop.
 - [ ] Support long names, empty states, keyboard use, and accessible dialogs and labels.
 - [ ] Add month/category filters and summaries that update after changes.
-- [ ] Calculate totals in the database and paginate history rather than loading every expense to calculate a summary. Add indexes based on actual filters and access patterns.
+- [x] Calculate totals in PostgreSQL and paginate expense history.
+- [ ] Add indexes based on actual filters and access patterns.
 
 ### 4. Verify recovery and private access
 
@@ -45,6 +46,8 @@ Each signed-in user can record an expense on a phone, correct mistakes, review m
 - [x] Activate those protections through a coordinated migration/deployment and verify signed-out, cross-user, and session-revocation behavior in the deployed environment. Production HTTP checks passed on October 25, 2026; temporary test accounts and groups were removed.
 
 ### Acceptance criteria
+
+The November 11, 2026 browser smoke test used 360 px and 430 px viewports, an isolated database, and fallback fonts because Google Fonts was unreachable. It covered a rejected save and successful retry, editing, confirmed deletion, and exact totals after reload. A shortened viewport verified dialog scrolling and saving. The native software keyboard still needs a check on a physical phone.
 
 - At representative 360-430px phone widths, the entry flow and history are usable without horizontal page scrolling; the software keyboard does not hide essential controls.
 - Create a Expense Group and Category, add an Expense, edit it, and delete it. Confirm changes survive refresh and summaries remain correct.

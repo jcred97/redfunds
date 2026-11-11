@@ -48,12 +48,12 @@ export default async function ExpenseGroupPage({
       <header className="pt-6">
         <div className="flex items-center justify-between gap-4">
           <ExpenseGroupSwitcher
-            key={expenseGroup.id}
+            key={`switcher-${expenseGroup.id}`}
             currentGroup={currentGroup}
             groups={groups}
             tabSuffix={tabSuffix}
           />
-          <ExpenseGroupSettings key={expenseGroup.id} group={currentGroup} tabSuffix={tabSuffix} />
+          <ExpenseGroupSettings key={`settings-${expenseGroup.id}`} group={currentGroup} tabSuffix={tabSuffix} />
         </div>
         <div className="mt-4 flex items-center justify-between gap-1 border-b border-gray-800 sm:mt-6 sm:gap-4">
           <nav aria-label="Expense group views" className="flex shrink-0 self-end">
