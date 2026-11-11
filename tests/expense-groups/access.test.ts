@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -7,7 +8,11 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
 import { createBankAccess } from "../../app/(dashboard)/_lib/banks/access";
-import { createExpenseGroupAccess } from "../../app/(dashboard)/_lib/expense-groups/access";
+import {
+  createExpenseGroupAccess,
+  parseExpenseHistoryBankFilter,
+  parseExpenseHistoryPaymentMethod,
+} from "../../app/(dashboard)/_lib/expense-groups/access";
 
 test("expense-group access isolates users and unclaimed data using real Prisma queries", async (t) => {
   // An isolated, in-memory PostgreSQL instance. Never reads DATABASE_URL.
@@ -493,6 +498,102 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
 
       await client.expense.deleteMany({ where: { expenseGroupId: group.id } });
       await client.category.deleteMany({ where: { expenseGroupId: group.id } });
+      await alice.delete(group.id);
+    });
+
+    await t.test("bank and payment method filters match the totals and rows across pages", async () => {
+      const group = await alice.create("Payment history");
+      const category = await client.category.create({
+        data: { expenseGroupId: group.id, name: "Groceries" },
+      });
+      const otherCategory = await client.category.create({
+        data: { expenseGroupId: group.id, name: "Transit" },
+      });
+      const bank = await client.bank.create({
+        data: { name: "Retired history bank", key: "retired history bank", active: false },
+      });
+      const assignment = await client.bankAssignment.create({
+        data: { expenseGroupId: group.id, bankId: bank.id, active: false },
+      });
+      const foreignAssignment = await client.bankAssignment.create({
+        data: { expenseGroupId: b.id, bankId: bank.id },
+      });
+      const recordedName = "Older Bancó & Co.";
+      const legacyKey = createHash("sha256").update(recordedName).digest("hex");
+      const assignmentToken = `assignment:${assignment.id}`;
+      const legacyToken = `legacy:${legacyKey}`;
+      const date = new Date("2026-10-24T00:00:00Z");
+      const base = { expenseGroupId: group.id, categoryId: category.id, amountCentavos: 10, date };
+      const linked = {
+        ...base,
+        paymentMethod: "DEBIT_CARD",
+        bankAssignmentId: assignment.id,
+        legacyBankName: recordedName,
+      } as const;
+      const matches = await client.expense.createManyAndReturn({
+        data: Array.from({ length: 26 }, (_, index) => ({ ...linked, title: `Linked expense ${index + 1}` })),
+        select: { id: true },
+      });
+      await client.expense.createMany({
+        data: [
+          { ...linked, title: "Other payment method", paymentMethod: "CREDIT_CARD", amountCentavos: 20 },
+          { ...linked, title: "Other category", categoryId: otherCategory.id, amountCentavos: 30 },
+          { ...linked, title: "Other month", date: new Date("2026-11-01T00:00:00Z"), amountCentavos: 40 },
+          { ...base, title: "Legacy debit", legacyBankName: recordedName, paymentMethod: "DEBIT_CARD", amountCentavos: 50 },
+          { ...base, title: "Legacy credit", legacyBankName: recordedName, paymentMethod: "CREDIT_CARD", amountCentavos: 60 },
+          { ...base, title: "Blank legacy label", legacyBankName: " \t " },
+        ],
+      });
+
+      const bankFilter = parseExpenseHistoryBankFilter(assignmentToken);
+      const paymentMethod = parseExpenseHistoryPaymentMethod("DEBIT_CARD");
+      assert.deepEqual(bankFilter, { assignmentId: assignment.id });
+      assert.equal(paymentMethod, "DEBIT_CARD");
+      const filters = { month: "2026-10", categoryId: category.id, paymentMethod, bank: bankFilter };
+      const first = await alice.getExpensePageById(group.id, 1, filters);
+      const last = await alice.getExpensePageById(group.id, 999, filters);
+      assert.ok(first && last);
+      assert.deepEqual([first.page, last.page], [1, 2]);
+      for (const page of [first, last]) {
+        assert.equal(page.totalExpenses, 26);
+        assert.equal(page.totalCentavos, BigInt(260));
+        assert.equal(page.totalPages, 2);
+      }
+      assert.equal(first.expenses.length, 25);
+      assert.equal(last.expenses.length, 1);
+      assert.deepEqual(
+        [...first.expenses, ...last.expenses].map(({ id }) => id),
+        matches.map(({ id }) => id).sort((left, right) => right - left),
+      );
+
+      assert.equal((await alice.getExpensePageById(group.id, 1, { paymentMethod }))?.totalCentavos, BigInt(380));
+      assert.equal((await alice.getExpensePageById(group.id, 1, { bank: bankFilter }))?.totalCentavos, BigInt(350));
+      const legacyFilter = parseExpenseHistoryBankFilter(legacyToken);
+      assert.deepEqual(legacyFilter, { legacyKey });
+      const historical = await alice.getExpensePageById(group.id, 1, { paymentMethod, bank: legacyFilter });
+      assert.deepEqual(historical?.expenses.map(({ title }) => title), ["Legacy debit"]);
+      assert.equal(historical?.totalCentavos, BigInt(50));
+
+      assert.deepEqual(await alice.listExpenseHistoryBankOptions(group.id), [
+        { value: legacyToken, label: `${recordedName} (recorded name)` },
+        { value: assignmentToken, label: bank.name },
+      ]);
+      assert.deepEqual(await bob.listExpenseHistoryBankOptions(group.id), []);
+      assert.deepEqual(await alice.listExpenseHistoryBankOptions(legacy.id), []);
+      await assert.rejects(anonymous.listExpenseHistoryBankOptions(group.id), /Sign in required/);
+      assert.equal(await bob.getExpensePageById(group.id, 1, filters), null);
+      assert.deepEqual(await alice.getExpensePageById(group.id, 2, { bank: { assignmentId: foreignAssignment.id } }), {
+        expenses: [],
+        page: 1,
+        totalPages: 1,
+        totalExpenses: 0,
+        totalCentavos: BigInt(0),
+      });
+
+      await client.expense.deleteMany({ where: { expenseGroupId: group.id } });
+      await client.category.deleteMany({ where: { expenseGroupId: group.id } });
+      await client.bankAssignment.deleteMany({ where: { bankId: bank.id } });
+      await client.bank.delete({ where: { id: bank.id } });
       await alice.delete(group.id);
     });
 

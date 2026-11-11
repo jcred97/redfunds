@@ -25,3 +25,7 @@ export async function getExpensesByExpenseGroupId(id: number) {
 export async function getExpensePageByExpenseGroupId(id: number, page: number, filters?: ExpenseHistoryFilters) {
   return access.getExpensePageById(id, page, filters);
 }
+
+export async function getExpenseHistoryBankOptionsByExpenseGroupId(id: number) {
+  return access.listExpenseHistoryBankOptions(id);
+}

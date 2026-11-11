@@ -1,4 +1,4 @@
-import { Prisma, type Expense, type PrismaClient } from "@/generated/prisma/client";
+import { PaymentMethod, Prisma, type Expense, type PrismaClient } from "@/generated/prisma/client";
 import { parseExpenseMonth } from "@/app/lib/expenses/date";
 
 // Expense-group IDs use PostgreSQL's signed INTEGER column.
@@ -33,7 +33,11 @@ type ExpenseGroupSummary = {
 export type ExpenseHistoryFilters = {
   month?: string;
   categoryId?: number;
+  paymentMethod?: PaymentMethod;
+  bank?: { assignmentId: number } | { legacyKey: string };
 };
+
+type ExpenseHistoryBankOption = { value: string; label: string };
 
 export class ExpenseGroupAccessError extends Error {}
 
@@ -43,6 +47,25 @@ function validId(id: number) {
     id > 0 &&
     id <= MAX_EXPENSE_GROUP_ID
   );
+}
+
+export function parseExpenseHistoryBankFilter(value: unknown): ExpenseHistoryFilters["bank"] {
+  if (typeof value !== "string" || value.trim() !== value) return undefined;
+
+  const assignment = /^assignment:([1-9]\d{0,9})$/.exec(value);
+  if (assignment) {
+    const assignmentId = Number(assignment[1]);
+    return validId(assignmentId) ? { assignmentId } : undefined;
+  }
+
+  const legacy = /^legacy:([a-f0-9]{64})$/.exec(value);
+  return legacy ? { legacyKey: legacy[1] } : undefined;
+}
+
+export function parseExpenseHistoryPaymentMethod(value: unknown): PaymentMethod | undefined {
+  return typeof value === "string" && Object.hasOwn(PaymentMethod, value)
+    ? PaymentMethod[value as keyof typeof PaymentMethod]
+    : undefined;
 }
 
 function parseName(name: unknown) {
@@ -167,10 +190,36 @@ export function createExpenseGroupAccess(
       });
     },
 
+    async listExpenseHistoryBankOptions(id: number) {
+      const userId = await requireUserId();
+      if (!validId(id)) return [];
+
+      // Use a digest as the URL value so recorded labels stay out of URLs.
+      return db.$queryRaw<ExpenseHistoryBankOption[]>`
+        WITH owned_group AS (
+          SELECT id FROM "Spending" WHERE id = ${id} AND "userId" = ${userId}
+        ), legacy_banks AS (
+          SELECT DISTINCT expense.bank AS name
+          FROM "Expense" expense
+          JOIN owned_group ON owned_group.id = expense."expenseGroupId"
+          WHERE expense."bankAssignmentId" IS NULL AND expense.bank ~ '[^[:space:]]'
+        )
+        SELECT 'assignment:' || assignment.id AS value, bank.name AS label
+        FROM "ExpenseGroupBank" assignment
+        JOIN owned_group ON owned_group.id = assignment."expenseGroupId"
+        JOIN "Bank" bank ON bank.id = assignment."bankId"
+        UNION ALL
+        SELECT 'legacy:' || encode(sha256(convert_to(name, 'UTF8')), 'hex') AS value,
+          name || ' (recorded name)' AS label
+        FROM legacy_banks
+        ORDER BY label, value
+      `;
+    },
+
     async getExpensePageById(
       id: number,
       requestedPage: number,
-      { month, categoryId }: ExpenseHistoryFilters = {}
+      { month, categoryId, paymentMethod, bank }: ExpenseHistoryFilters = {}
     ) {
       const userId = await requireUserId();
       if (!validId(id)) return null;
@@ -186,6 +235,19 @@ export function createExpenseGroupAccess(
       const categoryFilter = categoryId !== undefined && validId(categoryId)
         ? Prisma.sql`AND "categoryId" = ${categoryId}`
         : Prisma.empty;
+      const paymentMethodFilter = paymentMethod
+        ? Prisma.sql`AND "transactionType" = ${paymentMethod}::"TransactionType"`
+        : Prisma.empty;
+      let bankFilter = Prisma.empty;
+      if (bank && "assignmentId" in bank) {
+        bankFilter = Prisma.sql`AND "bankAssignmentId" = ${bank.assignmentId}`;
+      } else if (bank) {
+        bankFilter = Prisma.sql`AND "bankAssignmentId" IS NULL
+          AND bank ~ '[^[:space:]]'
+          AND encode(sha256(convert_to(bank, 'UTF8')), 'hex') = ${bank.legacyKey}`;
+      }
+      const expenseFilters = Prisma.sql`${monthFilter} ${categoryFilter} ${paymentMethodFilter} ${bankFilter}`;
+
       // Clamp the page and read its rows in the same database snapshot as the totals.
       const rows = await db.$queryRaw<ExpensePageRow[]>`
         WITH pagination AS (
@@ -198,7 +260,7 @@ export function createExpenseGroupAccess(
               GREATEST(1, (COUNT(*) + ${EXPENSES_PAGE_SIZE - 1}) / ${EXPENSES_PAGE_SIZE}) AS "totalPages"
             FROM "Expense"
             WHERE "expenseGroupId" = expense_group.id
-              ${monthFilter} ${categoryFilter}
+              ${expenseFilters}
           ) totals
           WHERE expense_group.id = ${id} AND expense_group."userId" = ${userId}
         )
@@ -211,7 +273,7 @@ export function createExpenseGroupAccess(
           SELECT id, title, "amountCentavos", date, "updatedAt", "categoryId", "transactionType", bank, "bankAssignmentId"
           FROM "Expense"
           WHERE "expenseGroupId" = pagination.id
-            ${monthFilter} ${categoryFilter}
+            ${expenseFilters}
           ORDER BY date DESC, id DESC
           LIMIT ${EXPENSES_PAGE_SIZE}
           OFFSET (pagination.page - 1) * ${EXPENSES_PAGE_SIZE}

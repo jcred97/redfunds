@@ -13,8 +13,7 @@ type ExpenseHistoryProps = {
   expenses: NonNullable<Awaited<ReturnType<typeof getExpensePageByExpenseGroupId>>>["expenses"];
   page: number;
   totalPages: number;
-  month?: string;
-  categoryId?: number;
+  filterQuery: string;
 };
 
 const pageLinkClass = "rounded-lg border px-3 py-2 text-sm font-medium";
@@ -30,13 +29,10 @@ export default function ExpenseHistory({
   expenses,
   page,
   totalPages,
-  month,
-  categoryId,
+  filterQuery,
 }: ExpenseHistoryProps) {
   function expensePageHref(page: number) {
-    const query = new URLSearchParams();
-    if (month !== undefined) query.set("month", month);
-    if (categoryId !== undefined) query.set("category", String(categoryId));
+    const query = new URLSearchParams(filterQuery);
     if (page > 1) query.set("page", String(page));
     const search = query.size > 0 ? `?${query}` : "";
     return `/spending/${expenseGroupId}${search}#expense-history-title`;
