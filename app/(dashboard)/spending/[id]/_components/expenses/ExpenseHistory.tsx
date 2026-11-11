@@ -1,4 +1,5 @@
-import type { getExpensesByExpenseGroupId } from "@/app/(dashboard)/_lib/expense-groups/queries";
+import Link from "next/link";
+import type { getExpensePageByExpenseGroupId } from "@/app/(dashboard)/_lib/expense-groups/queries";
 import { formatPesoAmount } from "@/app/lib/expenses/money";
 import { formatExpenseDate } from "@/app/lib/expenses/date";
 import EditExpenseButton from "./EditExpenseButton";
@@ -7,13 +8,19 @@ import DeleteExpenseButton from "./DeleteExpenseButton";
 type ExpenseHistoryProps = {
   expenseGroupId: number;
   categories: { id: number; name: string }[];
-  expenses: Awaited<ReturnType<typeof getExpensesByExpenseGroupId>>;
+  expenses: NonNullable<Awaited<ReturnType<typeof getExpensePageByExpenseGroupId>>>["expenses"];
+  page: number;
+  totalPages: number;
 };
+
+const pageLinkClass = "rounded-lg border px-3 py-2 text-sm font-medium";
 
 export default function ExpenseHistory({
   expenseGroupId,
   categories,
   expenses,
+  page,
+  totalPages,
 }: ExpenseHistoryProps) {
   function expenseActions(expense: ExpenseHistoryProps["expenses"][number]) {
     return (
@@ -44,7 +51,7 @@ export default function ExpenseHistory({
 
   return (
     <section aria-labelledby="expense-history-title">
-      <h2 id="expense-history-title" className="mb-4 text-lg font-semibold">
+      <h2 id="expense-history-title" tabIndex={-1} className="mb-4 text-lg font-semibold">
         Expenses
       </h2>
 
@@ -105,6 +112,42 @@ export default function ExpenseHistory({
           </tbody>
         </table>
       </div>
+      {totalPages > 1 && (
+        <nav aria-label="Expense history pages" className="mt-4 flex items-center justify-end gap-3">
+          {page > 1 ? (
+            <Link
+              href={expensePageHref(expenseGroupId, page - 1)}
+              prefetch={false}
+              className={`${pageLinkClass} border-gray-700 text-gray-200 hover:bg-gray-800`}
+            >
+              Previous
+            </Link>
+          ) : (
+            <span aria-disabled="true" className={`${pageLinkClass} border-gray-800 text-gray-500`}>
+              Previous
+            </span>
+          )}
+          <span className="text-sm text-gray-400">Page {page} of {totalPages}</span>
+          {page < totalPages ? (
+            <Link
+              href={expensePageHref(expenseGroupId, page + 1)}
+              prefetch={false}
+              className={`${pageLinkClass} border-gray-700 text-gray-200 hover:bg-gray-800`}
+            >
+              Next
+            </Link>
+          ) : (
+            <span aria-disabled="true" className={`${pageLinkClass} border-gray-800 text-gray-500`}>
+              Next
+            </span>
+          )}
+        </nav>
+      )}
     </section>
   );
+}
+
+function expensePageHref(groupId: number, page: number) {
+  const query = page > 1 ? `?page=${page}` : "";
+  return `/spending/${groupId}${query}#expense-history-title`;
 }

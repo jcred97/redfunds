@@ -76,14 +76,16 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       });
     }
 
-    await t.test("list includes only the signed-in user's groups and nested totals", async () => {
-      assert.deepEqual((await alice.list()).map((group) => group.id), [a.id]);
-      assert.deepEqual((await bob.list()).map((group) => group.id), [b.id]);
-      assert.equal(
-        (await alice.list())[0].categories[0].expenses[0].amountCentavos,
-        12345,
-      );
-      assert.equal((await bob.list())[0].categories[0]._count.expenses, 1);
+    await t.test("list includes only the signed-in user's group summaries", async () => {
+      for (const [access, group] of [[alice, a], [bob, b]] as const) {
+        assert.deepEqual(await access.list(), [{
+          id: group.id,
+          name: group.name,
+          categoryCount: BigInt(1),
+          expenseCount: BigInt(1),
+          totalCentavos: BigInt(12345),
+        }]);
+      }
     });
 
     await t.test("the group switcher only lists the signed-in user's group IDs and names", async () => {
@@ -346,6 +348,78 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       assert.equal((await alice.getExpensesById(source.id)).length, 2);
     });
 
+    await t.test("expense pages bound row counts and keep an exact owner-scoped full-group summary", async () => {
+      const group = await alice.create("Paginated group");
+      const empty = await alice.create("Empty pagination fixture");
+      const category = await client.category.create({
+        data: { expenseGroupId: group.id, name: "Travel", icon: "✈️" },
+      });
+      const bank = await client.bank.create({ data: { name: "Current bank", key: "current bank" } });
+      const assignment = await client.bankAssignment.create({
+        data: { expenseGroupId: group.id, bankId: bank.id },
+      });
+      const date = new Date("2026-10-24T00:00:00Z");
+      const amountCentavos = 2_147_483_647;
+      const expenses = await client.expense.createManyAndReturn({
+        data: Array.from({ length: 26 }, (_, index) => ({
+          expenseGroupId: group.id,
+          categoryId: category.id,
+          title: `Expense ${index + 1}`,
+          amountCentavos,
+          date: index === 0 ? new Date("2026-10-25T00:00:00Z") : date,
+          legacyBankName: "Legacy bank",
+          paymentMethod: "CASH",
+          bankAssignmentId: index === 0 ? assignment.id : undefined,
+        })),
+        select: { id: true, date: true },
+      });
+      const expectedIds = expenses
+        .sort((left, right) => right.date.getTime() - left.date.getTime() || right.id - left.id)
+        .map(({ id }) => id);
+
+      const first = await alice.getExpensePageById(group.id, 0);
+      const last = await alice.getExpensePageById(group.id, Number.MAX_SAFE_INTEGER);
+      assert.ok(first && last);
+      assert.equal(first.page, 1);
+      assert.equal(last.page, 2);
+      for (const page of [first, last]) {
+        assert.equal(page.totalExpenses, 26);
+        assert.equal(page.totalPages, 2);
+        assert.equal(page.totalCentavos, BigInt(amountCentavos) * BigInt(26));
+      }
+      assert.deepEqual(first.expenses.map(({ id }) => id), expectedIds.slice(0, 25));
+      assert.deepEqual(last.expenses.map(({ id }) => id), expectedIds.slice(25));
+      assert.deepEqual(first.expenses[0].bankAssignment, { bank: { name: "Current bank" } });
+      assert.deepEqual(last.expenses[0].date, date);
+      assert.deepEqual(last.expenses[0].category, { name: "Travel", icon: "✈️" });
+      assert.equal(last.expenses[0].legacyBankName, "Legacy bank");
+      assert.equal(last.expenses[0].paymentMethod, "CASH");
+
+      await client.expense.delete({ where: { id: last.expenses[0].id } });
+      const clamped = await alice.getExpensePageById(group.id, 2);
+      assert.equal(clamped?.page, 1);
+      assert.equal(clamped.totalExpenses, 25);
+
+      assert.deepEqual(await alice.getExpensePageById(empty.id, 2), {
+        expenses: [],
+        page: 1,
+        totalPages: 1,
+        totalExpenses: 0,
+        totalCentavos: BigInt(0),
+      });
+      assert.equal(await bob.getExpensePageById(group.id, 1), null);
+      assert.equal(await alice.getExpensePageById(legacy.id, 1), null);
+      assert.equal(await alice.getExpensePageById(2_147_483_648, 1), null);
+      await assert.rejects(anonymous.getExpensePageById(group.id, 1), /Sign in required/);
+
+      await client.expense.deleteMany({ where: { expenseGroupId: group.id } });
+      await client.category.delete({ where: { id: category.id } });
+      await client.bankAssignment.delete({ where: { id: assignment.id } });
+      await client.bank.delete({ where: { id: bank.id } });
+      await alice.delete(group.id);
+      await alice.delete(empty.id);
+    });
+
     await t.test("duplicating an empty group keeps the copy name within the limit", async () => {
       const prefix = "x".repeat(92);
       const source = await alice.create(prefix + "🚕123456");
@@ -354,6 +428,53 @@ test("expense-group access isolates users and unclaimed data using real Prisma q
       assert.deepEqual(await alice.getExpensesById(id), []);
       await alice.delete(id);
       await alice.delete(source.id);
+    });
+
+    await t.test("overview counts empty categories and sums large amounts without duplicating rows", async () => {
+      const user = await client.user.create({
+        data: { id: "overview", name: "Overview", email: "overview@example.test" },
+      });
+      const overview = createExpenseGroupAccess(client, async () => user.id);
+      assert.deepEqual(await overview.list(), []);
+
+      const populated = await client.expenseGroup.create({
+        data: { name: "Populated", userId: user.id, createdAt: new Date("2026-10-01") },
+      });
+      const empty = await client.expenseGroup.create({
+        data: { name: "Empty", userId: user.id, createdAt: new Date("2026-10-02") },
+      });
+      const category = await client.category.create({
+        data: { name: "Populated category", expenseGroupId: populated.id },
+      });
+      await client.category.create({
+        data: { name: "Empty category", expenseGroupId: populated.id },
+      });
+      await client.expense.createMany({
+        data: ["First expense", "Second expense"].map((title) => ({
+          title,
+          amountCentavos: 2_147_483_647,
+          date: new Date("2026-10-01"),
+          categoryId: category.id,
+          expenseGroupId: populated.id,
+        })),
+      });
+
+      assert.deepEqual(await overview.list(), [
+        {
+          id: empty.id,
+          name: empty.name,
+          categoryCount: BigInt(0),
+          expenseCount: BigInt(0),
+          totalCentavos: BigInt(0),
+        },
+        {
+          id: populated.id,
+          name: populated.name,
+          categoryCount: BigInt(2),
+          expenseCount: BigInt(2),
+          totalCentavos: BigInt(4_294_967_294),
+        },
+      ]);
     });
   } finally {
     await prisma?.$disconnect();

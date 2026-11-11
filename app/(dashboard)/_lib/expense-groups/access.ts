@@ -1,10 +1,33 @@
-import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type Expense, type PrismaClient } from "@/generated/prisma/client";
 
 // Expense-group IDs use PostgreSQL's signed INTEGER column.
 const MAX_EXPENSE_GROUP_ID = 2_147_483_647;
 const MAX_NAME_LENGTH = 100;
+const EXPENSES_PAGE_SIZE = 25;
 const GROUP_HAS_DEPENDENCIES =
   "Remove this expense group's categories, budgets, and bank assignments before deleting it.";
+
+type ExpensePageRow = {
+  totalExpenses: bigint;
+  totalCentavos: bigint;
+  totalPages: bigint;
+  page: bigint;
+} & (
+  | { id: null }
+  | (Pick<Expense, "id" | "title" | "amountCentavos" | "date" | "updatedAt" | "categoryId" | "paymentMethod" | "legacyBankName"> & {
+      categoryName: string;
+      categoryIcon: string | null;
+      bankName: string | null;
+    })
+);
+
+type ExpenseGroupSummary = {
+  id: number;
+  name: string;
+  categoryCount: bigint;
+  expenseCount: bigint;
+  totalCentavos: bigint;
+};
 
 export class ExpenseGroupAccessError extends Error {}
 
@@ -55,19 +78,35 @@ export function createExpenseGroupAccess(
     async list() {
       const userId = await requireUserId();
 
-      return db.expenseGroup.findMany({
-        where: { userId },
-        include: {
-          _count: { select: { categories: true } },
-          categories: {
-            include: {
-              expenses: { select: { amountCentavos: true } },
-              _count: { select: { expenses: true } },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+      return db.$queryRaw<ExpenseGroupSummary[]>`
+        WITH owned_groups AS (
+          SELECT "id", "name", "createdAt"
+          FROM "Spending"
+          WHERE "userId" = ${userId}
+        ),
+        category_counts AS (
+          SELECT c."spendingId" AS "groupId", COUNT(*) AS "categoryCount"
+          FROM "Category" AS c
+          JOIN owned_groups AS g ON g."id" = c."spendingId"
+          GROUP BY c."spendingId"
+        ),
+        expense_totals AS (
+          SELECT e."expenseGroupId" AS "groupId",
+                 COUNT(*) AS "expenseCount",
+                 SUM(e."amountCentavos") AS "totalCentavos"
+          FROM "Expense" AS e
+          JOIN owned_groups AS g ON g."id" = e."expenseGroupId"
+          GROUP BY e."expenseGroupId"
+        )
+        SELECT g."id", g."name",
+               COALESCE(c."categoryCount", 0) AS "categoryCount",
+               COALESCE(e."expenseCount", 0) AS "expenseCount",
+               COALESCE(e."totalCentavos", 0) AS "totalCentavos"
+        FROM owned_groups AS g
+        LEFT JOIN category_counts AS c ON c."groupId" = g."id"
+        LEFT JOIN expense_totals AS e ON e."groupId" = g."id"
+        ORDER BY g."createdAt" DESC, g."id" DESC
+      `;
     },
 
     async listForSwitcher() {
@@ -120,6 +159,70 @@ export function createExpenseGroupAccess(
         },
         orderBy: { date: "desc" },
       });
+    },
+
+    async getExpensePageById(id: number, requestedPage: number) {
+      const userId = await requireUserId();
+      if (!validId(id)) return null;
+
+      const page = Number.isSafeInteger(requestedPage) && requestedPage >= 1 ? requestedPage : 1;
+      // Clamp the page and read its rows in the same database snapshot as the totals.
+      const rows = await db.$queryRaw<ExpensePageRow[]>`
+        WITH pagination AS (
+          SELECT expense_group.id, totals.*,
+            LEAST(totals."totalPages", ${page}::bigint) AS page
+          FROM "Spending" expense_group
+          CROSS JOIN LATERAL (
+            SELECT COUNT(*) AS "totalExpenses",
+              COALESCE(SUM("amountCentavos"), 0) AS "totalCentavos",
+              GREATEST(1, (COUNT(*) + ${EXPENSES_PAGE_SIZE - 1}) / ${EXPENSES_PAGE_SIZE}) AS "totalPages"
+            FROM "Expense"
+            WHERE "expenseGroupId" = expense_group.id
+          ) totals
+          WHERE expense_group.id = ${id} AND expense_group."userId" = ${userId}
+        )
+        SELECT pagination."totalExpenses", pagination."totalCentavos", pagination."totalPages", pagination.page,
+          expense.id, expense.title, expense."amountCentavos", expense.date, expense."updatedAt", expense."categoryId",
+          expense."transactionType" AS "paymentMethod", expense.bank AS "legacyBankName",
+          category.name AS "categoryName", category.icon AS "categoryIcon", bank.name AS "bankName"
+        FROM pagination
+        LEFT JOIN LATERAL (
+          SELECT id, title, "amountCentavos", date, "updatedAt", "categoryId", "transactionType", bank, "bankAssignmentId"
+          FROM "Expense"
+          WHERE "expenseGroupId" = pagination.id
+          ORDER BY date DESC, id DESC
+          LIMIT ${EXPENSES_PAGE_SIZE}
+          OFFSET (pagination.page - 1) * ${EXPENSES_PAGE_SIZE}
+        ) expense ON true
+        LEFT JOIN "Category" category
+          ON category.id = expense."categoryId" AND category."spendingId" = pagination.id
+        LEFT JOIN "ExpenseGroupBank" assignment
+          ON assignment.id = expense."bankAssignmentId" AND assignment."expenseGroupId" = pagination.id
+        LEFT JOIN "Bank" bank ON bank.id = assignment."bankId"
+        ORDER BY expense.date DESC, expense.id DESC
+      `;
+
+      const [summary] = rows;
+      if (!summary) return null;
+
+      return {
+        totalExpenses: Number(summary.totalExpenses),
+        totalCentavos: summary.totalCentavos,
+        totalPages: Number(summary.totalPages),
+        page: Number(summary.page),
+        expenses: rows.filter((row) => row.id !== null).map((row) => ({
+          id: row.id,
+          title: row.title,
+          amountCentavos: row.amountCentavos,
+          date: row.date,
+          updatedAt: row.updatedAt,
+          categoryId: row.categoryId,
+          paymentMethod: row.paymentMethod,
+          legacyBankName: row.legacyBankName,
+          category: { name: row.categoryName, icon: row.categoryIcon },
+          bankAssignment: row.bankName === null ? null : { bank: { name: row.bankName } },
+        })),
+      };
     },
 
     async create(name: unknown) {

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
+import { formatPesoAmount } from "@/app/lib/expenses/money";
 import { getExpenseGroupOptions, getExpenseGroups } from "@/app/(dashboard)/_lib/expense-groups/queries";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
 import ExpenseGroupSwitcher from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSwitcher";
@@ -55,45 +55,33 @@ async function ExpenseGroupCards() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {expenseGroups.map((expenseGroup) => {
-            const totalCentavos = sumCentavos(
-              expenseGroup.categories.flatMap((category) =>
-                category.expenses.map((expense) => expense.amountCentavos)
-              )
-            );
-            const totalExpenses = expenseGroup.categories.reduce(
-              (expenseCount, category) => expenseCount + category._count.expenses,
-              0
-            );
+          {expenseGroups.map((expenseGroup) => (
+            <article key={expenseGroup.id} className="relative">
+              <ExpenseGroupLink id={expenseGroup.id}>
+                <div className="group cursor-pointer rounded-xl border border-gray-800 bg-gray-900 p-6 transition-all hover:border-red-500/50 hover:bg-gray-800/80">
+                  <h2 className="mb-4 wrap-anywhere pr-10 text-lg leading-tight font-semibold text-white transition-colors group-hover:text-red-400">
+                    {expenseGroup.name}
+                  </h2>
 
-            return (
-              <article key={expenseGroup.id} className="relative">
-                <ExpenseGroupLink id={expenseGroup.id}>
-                  <div className="group cursor-pointer rounded-xl border border-gray-800 bg-gray-900 p-6 transition-all hover:border-red-500/50 hover:bg-gray-800/80">
-                    <h2 className="mb-4 wrap-anywhere pr-10 text-lg leading-tight font-semibold text-white transition-colors group-hover:text-red-400">
-                      {expenseGroup.name}
-                    </h2>
+                  <p className="mb-4 text-3xl font-bold tracking-tight text-white">
+                    {formatPesoAmount(expenseGroup.totalCentavos)}
+                  </p>
 
-                    <p className="mb-4 text-3xl font-bold tracking-tight text-white">
-                      {formatPesoAmount(totalCentavos)}
-                    </p>
-
-                    <div className="flex gap-3 text-sm text-gray-400">
-                      <span>{expenseGroup._count.categories} categories</span>
-                      <span>·</span>
-                      <span>{totalExpenses} expenses</span>
-                    </div>
+                  <div className="flex gap-3 text-sm text-gray-400">
+                    <span>{expenseGroup.categoryCount} categories</span>
+                    <span>·</span>
+                    <span>{expenseGroup.expenseCount} expenses</span>
                   </div>
-                </ExpenseGroupLink>
-                <div className="absolute top-4 right-4">
-                  <ExpenseGroupSettings
-                    group={{ id: expenseGroup.id, name: expenseGroup.name }}
-                    onGroupList
-                  />
                 </div>
-              </article>
-            );
-          })}
+              </ExpenseGroupLink>
+              <div className="absolute top-4 right-4">
+                <ExpenseGroupSettings
+                  group={{ id: expenseGroup.id, name: expenseGroup.name }}
+                  onGroupList
+                />
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </>

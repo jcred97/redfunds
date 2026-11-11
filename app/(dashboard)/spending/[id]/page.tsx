@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
+import { formatPesoAmount } from "@/app/lib/expenses/money";
 import ExpenseCategories from "./_components/categories/ExpenseCategories";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
 import ExpenseGroupSwitcher from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSwitcher";
@@ -10,7 +10,7 @@ import NewExpenseButton from "./_components/expenses/NewExpenseButton";
 import {
   getExpenseGroupById,
   getExpenseGroupOptions,
-  getExpensesByExpenseGroupId,
+  getExpensePageByExpenseGroupId,
 } from "@/app/(dashboard)/_lib/expense-groups/queries";
 
 export default async function ExpenseGroupPage({
@@ -18,19 +18,22 @@ export default async function ExpenseGroupPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string | string[] }>;
+  searchParams: Promise<{ tab?: string | string[]; page?: string | string[] }>;
 }) {
-  const [{ id: rawId }, { tab }] = await Promise.all([params, searchParams]);
+  const [{ id: rawId }, { tab, page: rawPage }] = await Promise.all([params, searchParams]);
   const id = Number(rawId);
   const showCategories = tab === "categories";
+  const requestedPage = typeof rawPage === "string" && /^[1-9]\d*$/.test(rawPage)
+    ? Number(rawPage)
+    : 1;
 
-  const [expenseGroup, groups, expenses] = await Promise.all([
+  const [expenseGroup, groups, expensePage] = await Promise.all([
     getExpenseGroupById(id),
     getExpenseGroupOptions(),
-    showCategories ? [] : getExpensesByExpenseGroupId(id),
+    showCategories ? null : getExpensePageByExpenseGroupId(id, requestedPage),
   ]);
 
-  if (!expenseGroup) {
+  if (!expenseGroup || (!showCategories && !expensePage)) {
     notFound();
   }
 
@@ -79,20 +82,18 @@ export default async function ExpenseGroupPage({
       </header>
 
       <main className="py-6 sm:py-8">
-        {showCategories ? (
-          <ExpenseCategories expenseGroupId={expenseGroup.id} categories={expenseGroup.categories} />
-        ) : (
+        {expensePage ? (
           <>
             <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
                 <p className="mb-1 text-sm text-gray-400">Total Spent</p>
                 <p className="text-2xl font-bold">
-                  {formatPesoAmount(sumCentavos(expenses.map((expense) => expense.amountCentavos)))}
+                  {formatPesoAmount(expensePage.totalCentavos)}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
                 <p className="mb-1 text-sm text-gray-400">Expenses</p>
-                <p className="text-2xl font-bold">{expenses.length}</p>
+                <p className="text-2xl font-bold">{expensePage.totalExpenses}</p>
               </div>
               <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
                 <p className="mb-1 text-sm text-gray-400">Categories</p>
@@ -100,7 +101,7 @@ export default async function ExpenseGroupPage({
               </div>
             </div>
 
-            {expenses.length === 0 ? (
+            {expensePage.totalExpenses === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-center">
                 <div className="mb-4 flex size-16 items-center justify-center rounded-full border border-gray-800 bg-gray-900">
                   <span className="text-2xl">💸</span>
@@ -116,10 +117,14 @@ export default async function ExpenseGroupPage({
               <ExpenseHistory
                 expenseGroupId={expenseGroup.id}
                 categories={categoryOptions}
-                expenses={expenses}
+                expenses={expensePage.expenses}
+                page={expensePage.page}
+                totalPages={expensePage.totalPages}
               />
             )}
           </>
+        ) : (
+          <ExpenseCategories expenseGroupId={expenseGroup.id} categories={expenseGroup.categories} />
         )}
       </main>
     </div>

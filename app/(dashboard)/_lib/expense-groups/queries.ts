@@ -21,3 +21,7 @@ export async function getExpenseGroupById(id: number) {
 export async function getExpensesByExpenseGroupId(id: number) {
   return access.getExpensesById(id);
 }
+
+export async function getExpensePageByExpenseGroupId(id: number, page: number) {
+  return access.getExpensePageById(id, page);
+}

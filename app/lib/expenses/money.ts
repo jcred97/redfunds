@@ -41,8 +41,14 @@ export function formatPesoInput(amountCentavos: number): string {
 }
 
 /** Format integer centavos exactly, including totals above a single amount's limit. */
-export function formatPesoAmount(amountCentavos: number): string {
-  assertCentavos(amountCentavos);
+export function formatPesoAmount(amountCentavos: number | bigint): string {
+  if (typeof amountCentavos === "bigint") {
+    if (amountCentavos < BigInt(0)) {
+      throw new RangeError("Centavos must be nonnegative.");
+    }
+  } else {
+    assertCentavos(amountCentavos);
+  }
   const value = BigInt(amountCentavos);
   const pesos = (value / BigInt(100)).toLocaleString("en-PH");
   const fraction = (value % BigInt(100)).toString().padStart(2, "0");

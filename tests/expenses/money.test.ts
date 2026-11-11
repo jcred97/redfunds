@@ -44,6 +44,8 @@ test("formats zero, grouping, and large aggregate totals exactly", () => {
   assert.equal(formatPesoAmount(123456), "₱1,234.56");
   assert.equal(formatPesoAmount(MAX_AMOUNT_CENTAVOS), "₱21,474,836.47");
   assert.equal(formatPesoAmount(Number.MAX_SAFE_INTEGER), "₱90,071,992,547,409.91");
+  assert.equal(formatPesoAmount(BigInt("9007199254740993")), "₱90,071,992,547,409.93");
+  assert.throws(() => formatPesoAmount(BigInt(-1)), /nonnegative/);
 });
 
 test("aggregate totals support multiple maximum expenses and reject unsafe values", () => {
