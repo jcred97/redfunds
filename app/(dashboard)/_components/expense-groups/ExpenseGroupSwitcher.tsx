@@ -2,23 +2,25 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import NewExpenseGroupButton from "@/app/(dashboard)/_components/expense-groups/NewExpenseGroupButton";
+import NewExpenseGroupButton from "./NewExpenseGroupButton";
 
 type ExpenseGroupOption = { id: number; name: string };
 
 export default function ExpenseGroupSwitcher({
   currentGroup,
   groups,
-  tabSuffix,
+  tabSuffix = "",
 }: {
-  currentGroup: ExpenseGroupOption;
+  currentGroup?: ExpenseGroupOption;
   groups: ExpenseGroupOption[];
-  tabSuffix: string;
+  tabSuffix?: string;
 }) {
   const panelId = useId();
   const switcherRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const onGroupList = currentGroup === undefined;
+  const title = currentGroup?.name ?? "All Expense Groups";
 
   useEffect(() => {
     if (!open) return;
@@ -60,17 +62,21 @@ export default function ExpenseGroupSwitcher({
         }
       }}
     >
-      <h1 id="expense-group-title" tabIndex={-1} className="text-2xl font-bold tracking-tight sm:text-3xl">
+      <h1
+        id={onGroupList ? "expense-groups-title" : "expense-group-title"}
+        tabIndex={-1}
+        className={`font-bold tracking-tight sm:text-3xl ${onGroupList ? "text-lg" : "text-2xl"}`}
+      >
         <button
           ref={triggerRef}
           type="button"
-          aria-label={`${currentGroup.name}, switch expense group`}
+          aria-label={`${title}, switch expense group`}
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen(!open)}
           className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-sm text-left hover:text-gray-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400"
         >
-          <span className="min-w-0 wrap-anywhere">{currentGroup.name}</span>
+          <span className="min-w-0 wrap-anywhere">{title}</span>
           <svg
             aria-hidden="true"
             viewBox="0 0 16 16"
@@ -90,17 +96,26 @@ export default function ExpenseGroupSwitcher({
         <nav aria-label="Switch expense group">
           <Link
             href="/"
-            onNavigate={closeAndFocusTrigger}
-            className="block py-3 pr-4 pl-10 text-sm hover:bg-gray-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-600"
+            aria-current={onGroupList ? "page" : undefined}
+            onNavigate={(event) => {
+              if (onGroupList) event.preventDefault();
+              closeAndFocusTrigger();
+            }}
+            className={`flex items-start gap-2 px-4 py-3 text-sm hover:bg-gray-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-600 ${onGroupList ? "bg-red-50 font-semibold" : ""}`}
           >
-            All expense groups
-            <span className="mt-0.5 block text-xs text-gray-600">
-              {groups.length} {groups.length === 1 ? "group" : "groups"}
+            <span aria-hidden="true" className="w-4 shrink-0 text-red-600">
+              {onGroupList && "✓"}
+            </span>
+            <span>
+              All expense groups
+              <span className="mt-0.5 block text-xs font-normal text-gray-600">
+                {groups.length} {groups.length === 1 ? "group" : "groups"}
+              </span>
             </span>
           </Link>
           <ul className="max-h-60 overflow-y-auto overscroll-contain">
             {groups.map((group) => {
-              const selected = group.id === currentGroup.id;
+              const selected = group.id === currentGroup?.id;
               return (
                 <li key={group.id}>
                   <Link

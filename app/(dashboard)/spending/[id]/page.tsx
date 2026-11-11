@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
 import ExpenseCategories from "./_components/categories/ExpenseCategories";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
-import ExpenseGroupSwitcher from "./_components/ExpenseGroupSwitcher";
+import ExpenseGroupSwitcher from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSwitcher";
 import ExpenseHistory from "./_components/expenses/ExpenseHistory";
 import NewCategoryButton from "./_components/categories/NewCategoryButton";
 import NewExpenseButton from "./_components/expenses/NewExpenseButton";

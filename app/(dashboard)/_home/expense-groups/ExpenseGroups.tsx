@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { formatPesoAmount, sumCentavos } from "@/app/lib/expenses/money";
-import { getExpenseGroups } from "@/app/(dashboard)/_lib/expense-groups/queries";
+import { getExpenseGroupOptions, getExpenseGroups } from "@/app/(dashboard)/_lib/expense-groups/queries";
 import ExpenseGroupSettings from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSettings";
+import ExpenseGroupSwitcher from "@/app/(dashboard)/_components/expense-groups/ExpenseGroupSwitcher";
 import NewExpenseGroupButton from "@/app/(dashboard)/_components/expense-groups/NewExpenseGroupButton";
 import ExpenseGroupLink from "./_components/ExpenseGroupLink";
 import ExpenseGroupsSkeleton from "./_components/ExpenseGroupsSkeleton";
@@ -10,9 +11,15 @@ export default function ExpenseGroups() {
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10">
       <div className="mb-8 flex items-center gap-2 sm:gap-4">
-        <h1 id="expense-groups-title" tabIndex={-1} className="min-w-0 wrap-break-word text-lg font-semibold sm:text-2xl">
-          Your Expense Groups
-        </h1>
+        <Suspense
+          fallback={
+            <h1 className="min-w-0 wrap-anywhere text-lg font-bold tracking-tight sm:text-3xl">
+              All Expense Groups
+            </h1>
+          }
+        >
+          <AllExpenseGroupsSwitcher />
+        </Suspense>
         <div className="ml-auto shrink-0 whitespace-nowrap max-sm:[&>button]:px-2.5 max-sm:[&>button]:text-xs">
           <NewExpenseGroupButton />
         </div>
@@ -23,6 +30,12 @@ export default function ExpenseGroups() {
       </Suspense>
     </main>
   );
+}
+
+async function AllExpenseGroupsSwitcher() {
+  const groups = await getExpenseGroupOptions();
+
+  return <ExpenseGroupSwitcher groups={groups} />;
 }
 
 async function ExpenseGroupCards() {
