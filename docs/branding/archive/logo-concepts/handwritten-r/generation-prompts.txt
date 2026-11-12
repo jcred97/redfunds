@@ -1,0 +1,16 @@
+RedTally handwritten R coin concepts
+Built-in image generator
+
+Shared prompt
+Use case: logo-brand. Use the supplied RedTally logo as the reference for its horizontal emblem-plus-wordmark layout and colors. Design one original horizontal RedTally logo concept for a personal finance tracker named for the family name Red. Preserve the exact warm-ivory wordmark text "RedTally" in the same bold geometric sans serif, the solid charcoal background, and the proportions of the circular gold coin with the thick warm red rim to the left. Replace the coin’s peso glyph with a single distinct dark handwritten uppercase R. The coin’s R should be clearly legible, centered optically, broad enough for a favicon, with a clean recognizable R silhouette, one open counter and one rightward diagonal leg. Give it breathing room from the rim. Render one centered horizontal lockup on a 3:1 landscape canvas, with crisp graphic edges, flat fills and generous outer margins. No extra letters, captions, currency signs, ornament, bevel, texture, or shadows.
+
+Variant text appended to the shared prompt
+
+redtally-r-coin-signature.png
+Use a natural handwritten signature-style R, slightly right-leaning, with a gently curved stem, a broad open upper loop, and one short graceful diagonal leg. Suggest the motion of a confident felt-tip pen with a modest variation in weight. Keep all flourishes compact.
+
+redtally-r-coin-marker.png
+Use a compact handwritten R made of three confident broad marker strokes. Keep it nearly upright, with a rounded upper bowl and an assertive straight diagonal leg. Slightly rounded stroke ends and the uneven curve of the hand are the only irregularities. Make it especially clear at tab icon size.
+
+redtally-r-coin-engraved.png
+Use a personal handwritten R inspired by broad-nib lettering, with an upright thick stem, a spare upper loop, and an elegantly tapered diagonal leg. Use subtle thick-thin modulation and a restrained hooked top on the stem. The finished silhouette should feel like a hand-cut initial stamped into a coin.

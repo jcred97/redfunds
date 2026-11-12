@@ -1,0 +1,16 @@
+RedTally deep red and brass handwritten R concepts
+Built-in image generator
+
+Shared prompt
+Use case: logo-brand. Refine the attached RedTally logo concept. Keep the same wide 3:1 horizontal logo arrangement and relative sizes, charcoal background #151318, and exact warm ivory geometric wordmark "RedTally". Replace the left coin’s palette with a solid deep red oxblood coin face (#8E2131), a single muted brass rim (#B99A58) approximately 3 percent of the coin diameter, and a warm ivory handwritten capital R (#F6EBD7) on the coin face. The coin interior must be deep red, with absolutely no yellow or gold fill. Brass belongs only in the thin circular rim. Make a single centered bold R with one large clear enclosed counter and one leg, occupying about 60 percent of the coin diameter. Crisp, flat color, one horizontal logo per image. No gradients, texture, metallic highlights, bevel, shadows, decoration, currency strokes, multiple letters, taglines or extra layouts.
+
+Variant text appended to the shared prompt
+
+redtally-r-swept-pen.png
+A gently right-slanted pen-written R with a softly bowed stem, a wide high oval loop, and a diagonal leg that sweeps outward and rises ever so slightly at the end. Compact and lively, with no long flourishes.
+
+redtally-r-upright-chisel.png
+A nearly upright broad-nib R with a thick straight vertical stroke, a compact angular loop with a clearly open interior, and a sharply cut, tapered diagonal leg. Keep the chisel angle subtle enough to feel handwritten.
+
+redtally-r-rounded-brush.png
+A bold, nearly upright rounded brush R with a thick slightly bowed stem, rounded ends, one large almond-shaped enclosed counter, and a very short outward-curving leg with a blunt tip. Use nearly uniform stroke width and a simple compact silhouette.

@@ -1,0 +1,13 @@
+RedTally monochrome red coin concepts
+Built-in image generator
+
+Shared prompt
+Use case: logo-brand. Image 1 is the RedTally horizontal logo to edit. Preserve its exact warm-ivory "RedTally" wordmark, dark charcoal background, wide 3:1 composition, and coin size and position. Preserve the exact handwriting silhouette of the first R already inside the coin, especially the upright stem and long rounded leg that bends downward at the tip. Change the coin finish and structure only. Images 2–4 are style references for real coin construction, including the raised edge, inset face, reeding, beading and shallow relief. Draw a new original coin using these general construction cues. All parts of the coin, including the R, use only a cohesive, low-saturation red family. Use a matte muted brick-red face near #A23D46, dusty rose-red highlights near #E8A2A5, and deeper red relief near #74303A. The R should be the lightest muted red so the handwriting reads clearly even when small. No brass, gold, yellow, copper-orange, white, or black ink on the coin. No mirror shine or neon. No copied currency symbol, lettering, digits, circuit pattern, or watermark from the reference images. Show one clean horizontal lockup on the same charcoal field, with enough coin edge detail to read as minted but restrained enough for a logo.
+
+Variant text appended to the shared prompt
+
+redtally-red-coin-reeded-edge.png
+Face-on matte coin with a thin raised red outer lip, a band of neatly spaced shallow radial grooves, and one thin inner rim framing a quiet flat coin face. Use modest tonal separation and keep the R strong.
+
+redtally-red-coin-stamped-rim.png
+Nearly face-on matte coin, with a narrow visible red bevel, a finely beaded red border just inside the lip, a subtly recessed field and the handwritten R raised as shallow stamped relief. Keep the bead ring unobtrusive, the R high contrast, and the effect simple enough for a small app header.

@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "RedTally - Budget & Expense Tracker",
   description: "Track your expenses",
-  icons: { icon: { url: "/branding/redtally-peso.png", type: "image/png", sizes: "64x64" } },
+  icons: { icon: { url: "/branding/redtally-icon.png", type: "image/png", sizes: "64x64" } },
 };
 
 export default function RootLayout({

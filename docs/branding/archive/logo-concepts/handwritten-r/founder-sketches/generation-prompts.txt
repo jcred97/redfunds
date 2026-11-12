@@ -1,0 +1,19 @@
+RedTally logo concepts based on the founder’s handwritten Rs
+Built-in image generator
+
+Shared prompt
+Use case: logo-brand. Image 1 is the founder's handwritten source, four capital Rs left to right. Image 2 is the RedTally logo to edit. Replace only the ivory R inside the coin of Image 2 with a faithful cleaned-up tracing of the specified individual R from Image 1. Image 1 dictates the glyph shape. Retain the actual proportions of the tall, narrow, mostly upright handwriting, including how the stem, bowl and leg join. Smooth slight hand jitter and uniformly thicken the pen strokes to medium-bold, with a visibly open counter and rounded terminals. Center it optically at around 60% of the coin diameter. Do not add an entrance stroke, flourish, serif, extra leg or crossbars. Preserve the exact dark red coin face, thin muted brass rim, ivory lettering, layout and charcoal background from Image 2. The exact wordmark is "RedTally", with no other text. One wide 3:1 horizontal logo.
+
+Variant text appended to the shared prompt
+
+redtally-handwritten-r-01.png
+Trace the FIRST (leftmost) R. Its stem is tall and almost upright with a gentle bend. The upper bowl is rounded and sits in the upper half. The leg is a particularly rounded arch from the center to the right, bending down until its last section is nearly vertical. That curved, nearly vertical finish is the defining feature.
+
+redtally-handwritten-r-02.png
+Trace the SECOND R (second from the left). This is the smallest and most compact sketch, with a small rounded bowl, short upright stem, and a slender descending diagonal leg with a subtle curve. Maintain its compact proportions when scaling it into the coin.
+
+redtally-handwritten-r-03.png
+Trace the THIRD R (second from the right). Preserve the tall mostly upright stem, the broader teardrop-shaped upper bowl, and the long diagonal leg that angles broadly outward to the right from the middle, ending slightly higher than the bottom of the stem. Keep the upright stem extending below the leg.
+
+redtally-handwritten-r-04.png
+Trace the FOURTH (rightmost) R. Preserve the narrow upright stem and narrow, tall upper bowl. The leg descends steeply and diagonally from the junction with a small bend near its tip. This should be the narrowest, most upright glyph of the set.
