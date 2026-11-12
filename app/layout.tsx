@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "RedTally",
   description: "Track your expenses",
-  icons: { icon: { url: "/branding/redtally-peso.svg", type: "image/svg+xml" } },
+  icons: { icon: { url: "/branding/redtally-peso.png", type: "image/png", sizes: "64x64" } },
 };
 
 export default function RootLayout({
