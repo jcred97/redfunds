@@ -1,0 +1,65 @@
+RedTally logo concepts
+Built-in image generator
+
+Shared prompt
+Use case: logo-brand. Generate one original horizontal logo lockup for the personal budgeting app RedTally. Ultra-wide 3:1 landscape brand presentation. A compact emblem on the left and the exact wordmark "RedTally" to its right in sturdy, medium-bold warm ivory sans serif, properly optically spaced. Charcoal #171619 background, crimson #EF514B emblem, restrained matte gold #E9BB69 accents. The complete lockup is centered, spanning about 72% of canvas width. Prioritize a distinctive, solid silhouette, simple geometry, small-size legibility, crisp flat color. Single design. No gradients, shadows, extra labels, mockups, border, watermark, or additional text.
+
+Variant text appended to the shared prompt
+
+animals/redtally-philippine-eagle.png
+Right-facing Philippine eagle head, hook beak, prominent swept-back pointed crest feathers, a single clean eye cut and a small gold coin tucked near the lower neck. Use an original emblem silhouette.
+
+animals/redtally-piggy-bank.png
+Compact crimson piggy-bank silhouette in profile, recognizable rounded snout and belly, clean slot in the back with a single gold coin halfway inserted. Use an elegant graphic silhouette.
+
+animals/redtally-bull.png
+Front-facing symmetrical bull head in compact angular crimson shapes with sweeping gold horns and a small dark negative-space cut for each eye. Keep the expression calm, iconic and simplified.
+
+animals/redtally-dragon.png
+Crimson serpentine dragon curls into a near-circle around one matte gold coin, with an angular head and one clean taper at the tail. Use solid shapes and very few details.
+
+animals/redtally-money-toad.png
+Original three-legged Chinese money toad in a low three-quarter silhouette. Exactly two front feet and one rear foot centered under its body. Gently rounded crimson back, simple round gold coin held vertically in its mouth. Simple broad shapes.
+
+currency/redtally-peso.png
+The emblem is based on the exact single currency character "₱". The only text allowed is the emblem's single currency glyph and the wordmark RedTally. Use a solid gold circular medallion inside a thick red rim. Center the canonical Philippine peso sign, a capital P crossed by exactly two horizontal bars, in deep charcoal.
+
+currency/redtally-dollar.png
+The emblem is based on the exact single currency character "$". The only text allowed is the emblem's single currency glyph and the wordmark RedTally. Use one bold red dollar glyph, an S crossed by a single gold vertical stroke. No enclosing shape.
+
+currency/redtally-euro.png
+The emblem is based on the exact single currency character "€". The only text allowed is the emblem's single currency glyph and the wordmark RedTally. Use one bold gold euro glyph, a C-shaped curve with two parallel horizontal bars, inside a simple solid crimson disk.
+
+currency/redtally-pound.png
+The emblem is based on the exact single currency character "£". The only text allowed is the emblem's single currency glyph and the wordmark RedTally. Use a bold gold pound sterling glyph, with a hooked upright, one horizontal crossbar and a long flat foot. Set it inside a flat crimson rounded square.
+
+currency/redtally-yen.png
+The emblem is based on the exact single currency character "¥". The only text allowed is the emblem's single currency glyph and the wordmark RedTally. Use one bold crimson yen glyph with a forked Y silhouette and exactly two gold horizontal crossbars through the stem. No enclosing shape.
+
+currency/redtally-rupee.png
+The emblem is based on the exact single currency character "₹". The only text allowed is the emblem's single currency glyph and the wordmark RedTally. Use one bold gold Indian rupee glyph, preserving its two horizontal top strokes, the upper-right curve, and diagonal lower leg. Set it inside a crimson disk.
+
+currency/redtally-bitcoin.png
+The emblem is based on the exact single currency character "₿". The only text allowed is the emblem's single currency glyph and the wordmark RedTally. Use one bold gold Bitcoin glyph, a B with two short parallel vertical stems protruding above and below. Keep it upright. Set it inside a crimson disk.
+
+money-icons/redtally-coin-stack.png
+Three flat gold coins stacked with bold charcoal gaps, and a red top coin tipped just enough to show a circle. A clean graphic for accumulated savings. No engraving or currency characters.
+
+money-icons/redtally-banknotes.png
+Two overlapped simplified crimson banknotes, one tilted a few degrees with one centered gold oval seal and minimal clean cutout details. No denomination, numbers, currency glyphs, or realistic note printing.
+
+money-icons/redtally-wallet.png
+A compact side-facing crimson wallet with a single small gold clasp and one simple gold banknote peeking out. A single unified silhouette with two purposeful cutouts. No currency glyphs.
+
+money-icons/redtally-money-bag.png
+A clean crimson drawstring sack silhouette with a small gold drawstring and a bold gold coin medallion centered on the body. The medallion is plain, no engravings or characters.
+
+money-icons/redtally-gold-bars.png
+Three simple gold ingot trapezoids in a compact pyramid, one above and two below, with very small crimson flat side facets and dark separation. Keep geometry bold. No shine, engraving, or glyphs.
+
+money-icons/redtally-vault.png
+A compact crimson rounded-square vault door silhouette with one gold three-spoke combination wheel centered inside. Simplified negative space and no numbers, tick marks or glyphs.
+
+Refinement of currency/redtally-peso.png
+currency/redtally-peso-v2.png
+Use case: logo-brand. Refine Image 1, the existing RedTally Philippine peso logo. Preserve the horizontal coin-left and wordmark-right arrangement, the exact spelling and case "RedTally", the broad 3:1 canvas, a solid flat charcoal background (#171619), and warm ivory wordmark (#F4EEE2). Keep the original visual identity but polish the proportions for a finance app that tracks both spending and investments. Make the circular medallion about 20% smaller than in the reference, with a diameter about 1.25 times the wordmark's capital-letter height. Replace the thick red border with a clean thin concentric vermilion rim, approximately 4% of the coin diameter, on a warm matte antique-gold face (#E9BB69). Use exactly one rim, no decorative marks. Center an unambiguous charcoal Philippine peso glyph "₱" on the gold face. Draw it as a clearly readable capital P with one generously open bowl and exactly two clean, parallel, widely separated horizontal crossbars through the middle; both crossbars visibly extend past the stem to the left and the bowl to the right. The main glyph strokes should have clear spacing and remain recognizable at small sizes. Use a slightly lighter bold geometric sans wordmark with measured optical kerning. Leave a comfortable gap between emblem and type. Center the whole lockup on both axes. Flat uniform fills and crisp edges, no shading, gradients, lighting, surface texture, shadows, added graphics, added type or mockup. One complete revised logo.

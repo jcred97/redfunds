@@ -131,6 +131,8 @@ Authenticated pages render per request because their session check uses request 
 | `tests/auth/` | Authentication and session tests |
 | `tests/categories/`, `tests/expense-groups/`, `tests/expenses/` | Feature access, expense date, and money tests |
 | `tests/db/migrations/` | Tests for PostgreSQL migrations and data preservation |
+| `public/branding/` | Approved RedTally header logo and peso favicon |
+| `docs/branding/logo-concepts/` | Logo explorations and generation prompts |
 | `docs/roadmap.md` | Planned milestones and completion criteria |
 | `docs/data-model.md` | Core model, integrity rules, and preservation strategy |
 

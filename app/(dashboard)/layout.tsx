@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import AccountMenu from "@/app/components/auth/AccountMenu";
@@ -12,13 +13,21 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <header className="border-b border-gray-800 bg-gray-950 text-white">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-3 sm:gap-8">
+      <header className="border-b border-gray-800 bg-[#151318] text-white">
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-8 sm:px-6">
           <Link
             href="/"
-            className="shrink-0 rounded-sm text-lg font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 sm:text-xl"
+            className="flex h-8 w-32 shrink-0 items-center justify-center overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 sm:h-9 sm:w-40"
           >
-            Red<span className="text-red-500">Tally</span>
+            <Image
+              src="/branding/redtally-logo.png"
+              alt="RedTally home"
+              width={2172}
+              height={724}
+              sizes="(min-width: 640px) 215px, 172px"
+              loading="eager"
+              className="h-auto w-[134%] max-w-none shrink-0"
+            />
           </Link>
           <nav aria-label="Main navigation" className="mr-auto">
             <Link
