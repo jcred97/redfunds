@@ -58,7 +58,7 @@ export default function CategoryActions({
             defaultValue={category.name}
             required
             maxLength={100}
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white transition-colors focus:border-red-500 focus:outline-none"
+            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white transition-colors focus:border-red-400 focus:outline-none"
           />
         </div>
       </FormDialog>

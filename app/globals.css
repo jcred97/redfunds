@@ -1,8 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712;
-  --foreground: #f9fafb;
+  --background: var(--color-gray-950);
+  --foreground: #fbf0eb;
+  color-scheme: dark;
+}
+
+@theme {
+  /* Carry the coin's muted red into accents and warm the neutral surfaces. */
+  --color-gray-50: #fcf3f1;
+  --color-gray-100: #f1e2e1;
+  --color-gray-200: #e5d0d1;
+  --color-gray-300: #dbc3c7;
+  --color-gray-400: #c7a9af;
+  --color-gray-500: #ba999e;
+  --color-gray-600: #684750;
+  --color-gray-700: #a07580;
+  --color-gray-800: #482d35;
+  --color-gray-900: #302026;
+  --color-gray-950: #1c1216;
+
+  --color-red-50: #efd6d8;
+  --color-red-300: #efb7b8;
+  --color-red-400: #e1a0a2;
+  --color-red-500: #ae515b;
+  --color-red-600: #902c33;
 }
 
 @theme inline {

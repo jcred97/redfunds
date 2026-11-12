@@ -91,7 +91,7 @@ export default function ExpenseGroupSwitcher({
       <div
         id={panelId}
         hidden={!open}
-        className="absolute top-full left-0 z-10 mt-2 w-64 max-w-[calc(100vw-3rem)] overflow-hidden rounded-lg border border-gray-200 bg-white text-gray-900 shadow-xl"
+        className="absolute top-full left-0 z-10 mt-2 w-64 max-w-[calc(100vw-3rem)] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 text-gray-900 shadow-xl"
       >
         <nav aria-label="Switch expense group">
           <Link

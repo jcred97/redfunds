@@ -43,7 +43,7 @@ export default function CreateNameDialog({
           required
           maxLength={100}
           placeholder={placeholder}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 transition-colors"
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-red-400 transition-colors"
         />
       </div>
     </FormDialog>

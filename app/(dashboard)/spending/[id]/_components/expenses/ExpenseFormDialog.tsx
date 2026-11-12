@@ -116,7 +116,7 @@ export default function ExpenseFormDialog({
   }
 
   const inputClass =
-    "mt-2 w-full min-w-0 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white outline-none focus:border-red-500 disabled:opacity-60";
+    "mt-2 w-full min-w-0 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-white outline-none focus:border-red-400 disabled:opacity-60";
 
   return (
     <div>

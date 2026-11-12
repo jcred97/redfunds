@@ -96,7 +96,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   }
 
   const inputClass =
-    "mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 disabled:opacity-60";
+    "mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/30 disabled:opacity-60";
 
   let loadingMessage: string;
 
@@ -124,7 +124,7 @@ export default function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           aria-labelledby="auth-title"
         >
           <p className="mb-8 text-xl font-bold tracking-tight">
-            Red<span className="text-red-500">Tally</span>
+            Red<span className="text-red-400">Tally</span>
           </p>
 
           <h1 id="auth-title" className="text-2xl font-semibold">
