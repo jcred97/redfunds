@@ -2,6 +2,7 @@ import Form from "next/form";
 import Link from "next/link";
 import { paymentMethodLabels } from "@/app/lib/expenses/payment";
 import type { PaymentMethod } from "@/generated/prisma/enums";
+import styles from "./ExpenseHistoryFilters.module.css";
 
 type ExpenseHistoryFiltersProps = {
   groupPath: string;
@@ -16,6 +17,8 @@ type ExpenseHistoryFiltersProps = {
 };
 
 const fieldClass = "mt-1 block h-10 w-full min-w-0 rounded-lg border border-gray-700 bg-gray-800 px-3 text-base text-white [color-scheme:dark] focus-visible:outline-2 focus-visible:outline-red-400 sm:text-sm";
+
+const selectClass = `${fieldClass} ${styles.select}`;
 
 export default function ExpenseHistoryFilters({
   groupPath,
@@ -55,7 +58,7 @@ export default function ExpenseHistoryFilters({
       </label>
       <label className="min-w-0 text-sm text-gray-300">
         Category
-        <select name="category" defaultValue={categoryId ?? ""} className={fieldClass}>
+        <select name="category" defaultValue={categoryId ?? ""} className={selectClass}>
           <option value="">All categories</option>
           {categoryUnavailable && <option value={categoryId}>Unavailable category</option>}
           {categories.map((category) => (
@@ -71,7 +74,7 @@ export default function ExpenseHistoryFilters({
           id="expense-filter-payment-method"
           name="paymentMethod"
           defaultValue={paymentMethod ?? ""}
-          className={fieldClass}
+          className={selectClass}
         >
           <option value="">All payment methods</option>
           {Object.entries(paymentMethodLabels).map(([method, label]) => (
@@ -81,7 +84,7 @@ export default function ExpenseHistoryFilters({
       </div>
       <div className="min-w-0">
         <label htmlFor="expense-filter-bank" className="text-sm text-gray-300">Bank</label>
-        <select id="expense-filter-bank" name="bank" defaultValue={bank ?? ""} className={fieldClass}>
+        <select id="expense-filter-bank" name="bank" defaultValue={bank ?? ""} className={selectClass}>
           <option value="">All banks</option>
           {bankUnavailable && <option value={bank}>Unavailable bank</option>}
           {banks.map(({ value, label }) => (
